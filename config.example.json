@@ -1,0 +1,10 @@
+{
+  "_instrucciones": "Copia este archivo a config.json y completa tus valores. Nunca comitear config.json.",
+  "api_gateway": {
+    "url": "https://<id>.execute-api.us-west-2.amazonaws.com/prod"
+  },
+  "test_user": {
+    "email": "tu-email@ejemplo.com",
+    "password": "TuContraseña"
+  }
+}
