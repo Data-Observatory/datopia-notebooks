@@ -9,7 +9,7 @@
 Notebooks públicos de acceso y análisis de datos del **Datopia Lakehouse**, operado por
 [Data Observatory](https://dataobservatory.net).
 
-Los datos se consumen directamente desde S3 con credenciales temporales — sin descarga de archivos,
+Los datos se consumen directamente desde S3 con credenciales temporales, sin descarga de archivos,
 sin infraestructura propia. Compatible con Google Colab y entornos locales.
 
 ---
@@ -85,4 +85,4 @@ Para solicitar acceso, contacta a [Data Observatory](https://dataobservatory.net
 
 ## Licencia
 
-[MIT](LICENSE) · Datos provistos por Data Observatory · Fuente: DTP Metropolitano (DTPM)
+[MIT](LICENSE) · Datos servidos por Data Observatory
