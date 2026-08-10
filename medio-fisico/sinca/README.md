@@ -6,30 +6,32 @@ en las 16 regiones de Chile, cobertura desde 1971 (red completa desde 2000).
 
 ## Notas sobre los datos
 
-**Particionado NO uniforme — importante.** El mes en curso se almacena por día
-(`year=/month=/day=/part-00000.parquet`); al cerrar el mes, `sinca-monthly-consolidator` fusiona
-los archivos diarios en uno solo por mes (`year=/month=/part-00000.parquet`) y elimina los
-diarios. Un mismo `tipo=medicion-diaria/version=v1/year=YYYY/` puede tener meses con ambas
-profundidades simultáneamente.
-
-**No usar `hive_partitioning=true` sobre rangos que mezclen ambas profundidades.** DuckDB exige
-que todos los archivos leídos en una misma llamada `read_parquet` compartan el mismo conjunto de
-claves Hive — falla con `Binder Error: Hive partition mismatch` si se combinan meses con `day=` y
-meses sin él. La columna `fecha` (timestamp) ya está presente en cada archivo independientemente
-del particionado físico: filtra con `WHERE fecha >= ... AND fecha < ...` en vez de columnas
-`year`/`month`/`day` derivadas del path, y omite `hive_partitioning` (o pásalo en `false`).
+**Layout plano, sin particiones (2026-08-09).** `tipo=medicion-diaria/version=v1/` ya no usa
+`year=/month=/day=`. Son solo unos pocos archivos `part-NNNNN.parquet` (ver `manifest.json` en la
+misma ruta para la lista exacta) — todos menos el último están permanentemente congelados; el
+último es el "abierto" que el merger diario actualiza, y se sella en uno nuevo al acercarse a
+~200MB. En la práctica: siempre glob `part-*.parquet` y filtra por fecha en el `WHERE`, sin
+distinguir formatos ni usar `hive_partitioning`.
 
 ```python
-# Correcto — funciona sobre meses consolidados y meses en curso por igual
 con.execute(f"""
-    SELECT * FROM read_parquet('{BASE}/tipo=medicion-diaria/version=v1/year=2026/**/*.parquet')
+    SELECT * FROM read_parquet('{BASE}/tipo=medicion-diaria/version=v1/part-*.parquet')
     WHERE fecha >= DATE '2026-01-01' AND fecha < DATE '2026-07-01'
 """)
 ```
 
-**Formato long.** Una fila por (`fecha`, `estacion_id`, `variable_code`, `periodicidad`). Nunca
-pivotado. `periodicidad` es `"diario"` (promedio diario) u `"horario"`. El promedio diario de un
-día solo aparece una vez el día está completo — el día en curso todavía no tiene filas `diario`.
+**Formato long, con claves surrogate (2026-08-09).** Una fila por (`fecha`, `estacion_fk`,
+`variable_fk`, `periodicidad_fk`). `estacion_fk`/`variable_fk` son enteros, no los códigos de
+texto (`estacion_id`/`variable_code`) — hay que hacer `JOIN` contra `tipo=estaciones`/
+`tipo=variables` para obtener los códigos legibles (ver `demo.ipynb`, sección 2, para el patrón).
+Motivo: guardar el texto directamente inflaba ~48x el tamaño en memoria al procesar el archivo
+completo. `periodicidad_fk`: `0=horario, 1=diario, 2=discreto` (sin tabla de referencia, son solo
+3 valores fijos). El promedio diario de un día solo aparece una vez el día está completo — el día
+en curso todavía no tiene filas `periodicidad_fk=1`.
+
+Nota: `tipo=estaciones-variables` (el catálogo de qué variable mide cada estación) **no** cambió
+de esquema — sigue usando `estacion_id`/`variable_code` como texto, sin fk. Solo `medicion-diaria`
+migró a claves surrogate.
 
 **Calidad del dato.** `calidad_id`: 1 = validado, 2 = preliminar, 3 = no validado (ver
 `tipo=calidad`). Los días recientes suelen estar en preliminar/no validado — este notebook no
@@ -78,9 +80,10 @@ guardados de antes de esta fecha:
   era exactamente este bug** — no es un problema del dato en sí, era el propio motor de consultas
   enmascarando la columna real. Cualquier query anterior que hiciera `SELECT tipo` o
   `WHERE tipo = ...` sobre estas dos tablas debe actualizarse a `variable_tipo`.
-- **`tipo=estaciones-variables`: unificado el discovery.** Antes se armaba con una regex más
-  estricta que el extractor de mediciones, y por eso 2 estaciones con mediciones reales (D14
-  Parque O'Higgins, 837 Nueva Libertad) no aparecían en este catálogo. Ya corregido.
+- **`tipo=estaciones-variables`: unificado el discovery para 837 (Nueva Libertad).** Antes se
+  armaba con una regex más estricta que el extractor de mediciones, y por eso esta estación (con
+  mediciones reales) no aparecía en el catálogo. *Corrección (2026-08-09): esto NO cubrió a D14 —
+  ver más abajo, ese bug era otro y quedó sin corregir hasta ahora.*
 - **Fecha `2099-12-29` en estación 819 corregida** (y cualquier otra fecha pre-2000 mal
   interpretada en `fecha_primer_registro`/`fecha_ultimo_registro`): bug de parseo de años de 2
   dígitos, mismo patrón que ya estaba bien resuelto en otro archivo del pipeline pero nunca se
@@ -95,6 +98,29 @@ guardados de antes de esta fecha:
 - **`demo.ipynb` corregido**: la sección 5 (perfil multi-variable) filtraba por el código viejo
   `variable_code = '0008'` esperando O3 — con el fix del punto 2, ese filtro nunca iba a encontrar
   nada. Ya usa `'O3'`.
+
+## Notas de actualización 2026-08-09/10
+
+- **`medicion-diaria` migró a layout plano + claves surrogate.** Ver las dos notas actualizadas
+  arriba ("Layout plano" y "Formato long, con claves surrogate"). Motivo original: un full-corpus
+  merge de 115M filas necesitaba ~17GB de RAM de trabajo (vs 360MB comprimido) para procesar el
+  archivo completo, muy por sobre el límite del proceso diario -- separar en frozen/open + usar
+  enteros en vez de texto lo resuelve.
+- **Estación Parque O'Higgins (D14): catálogo `estaciones-variables` corregido.** Tenía cero
+  variables declaradas pese a tener mediciones reales desde 1997 -- causa real: el nombre de la
+  estación contiene un apóstrofe ("O'Higgins"), que rompía la regex que detecta el enlace en la
+  página de SINCA (confundía el apóstrofe con el cierre de un atributo `href="..."`). Es un fix
+  general (no específico de D14) que ahora maneja cualquier nombre de estación con comillas
+  embebidas. D14 ahora muestra sus 26 combinaciones reales.
+- **`tipo=estaciones-variables`: normalizados códigos numéricos heredados.** 134/73/85/72/79
+  estaciones respectivamente tenían `0001`/`0002`/`0003`/`0004`/`0008` en vez de
+  `SO2`/`NO`/`NO2`/`CO`/`O3` en esta tabla específicamente (el fix del 2026-08-05 solo cubrió
+  `tipo=variables`, no este catálogo) -- rompía cualquier join contra el diccionario de variables
+  para esas filas. Ya corregido.
+- **`demo.ipynb` reescrito** para el nuevo esquema: todas las consultas sobre `medicion-diaria`
+  ahora hacen `JOIN` contra `tipo=estaciones`/`tipo=variables` en vez de filtrar directamente por
+  `estacion_id`/`variable_code` (ese filtro ya no funciona -- esas columnas no existen en
+  `medicion-diaria`). Probado de punta a punta contra datos reales.
 
 ## Archivos
 
