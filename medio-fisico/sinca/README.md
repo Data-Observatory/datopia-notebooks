@@ -122,6 +122,22 @@ guardados de antes de esta fecha:
   `estacion_id`/`variable_code` (ese filtro ya no funciona -- esas columnas no existen en
   `medicion-diaria`). Probado de punta a punta contra datos reales.
 
+## Notas de actualización 2026-08-10
+
+- **`demo.ipynb`: 5 celdas nuevas orientadas a analistas/testers**, en la sección de
+  exploración del dataset:
+  - Diccionario de variables: nota explícita sobre los 3 códigos sin documentar
+    (`CORG`/`CTOT`/`TRSG`).
+  - Ayuda de cobertura (`variables_de(estacion_id)` / `estaciones_que_miden(variable_code)`):
+    responde directo "¿qué mide esta estación?" / "¿quién mide esta variable?" sin tener que
+    escribir el `JOIN` a mano cada vez.
+  - Frescura: última fecha disponible por estación y ranking de las más atrasadas.
+  - Calidad: distribución global de `calidad_id` en mediciones diarias + ejemplo cuantificado
+    de cuánto se pierde al filtrar a validado+preliminar.
+  - Detector de huecos (`huecos_serie(...)`): días faltantes de una estación/variable en un
+    rango de fechas dado.
+  - Probado de punta a punta contra datos reales (`nbconvert --execute`).
+
 ## Archivos
 
 | Archivo | Descripción |
