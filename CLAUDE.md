@@ -173,13 +173,15 @@ en el repo de infraestructura (`do-aws_cdk_apps/apps/lakehouse/`).
       Fix sugerido en infraestructura: agregar `hour` al pipeline de ingesta en `do-aws_cdk_apps/apps/lakehouse/`.
 
 - [x] **`dataset.json` (catálogo) desincronizado con el esquema real de los Parquet — `service_name` no existe.**
-      `dataset.json` declara `service_name`, pero no existe en los Parquet reales (reemplazado por
-      `operator_name`, semánticamente distinto — nombre de la concesionaria, no código de servicio).
-      Ya corregido en notebook (`transporte/red-movilidad/demo.ipynb`, commit `b8c28c5`, usa
-      `operator_name`). Sigue pendiente en infraestructura: decidir si `service_name` se reincorpora
-      al pipeline o se retira formalmente del catálogo, y regenerar `dataset.json` para reflejar el
-      esquema físico real.
-
+      `dataset.json` declaraba `service_name` (código de servicio Sinoptic), con un comentario que
+      afirmaba que `operator_name` era un nombre "previamente incorrecto". Verificado en el pipeline
+      de ingesta (`do-scrapers`) y en TODO el histórico publicado (2025-09-09 → última fecha
+      disponible): nunca se produjo `service_name` — el campo siempre fue `operator_name` (nombre de
+      la concesionaria, hermano de `operator_number`), consistente con el propio
+      `ARCHITECTURE_PLAN.md` del pipeline. La idea de `service_name` no tenía respaldo en el código
+      ni en la API DTP. Corregido en catálogo (`do-aws_cdk_apps`, commit `42215b0`, vuelve a declarar
+      `operator_name`) y ya reflejado en notebook. Si en el futuro se quiere un código de servicio
+      Sinoptic real, es una feature nueva a evaluar contra la API DTP, no un fix.
 
 - [x] **Clave de particiones en `dataset.json` inestable — cambió de `partition_keys` a `partitioned_by` y volvió a `partition_keys`.**
       El commit `b8c28c5` (2026-07-10) actualizó el notebook a `partitioned_by` porque el catálogo
