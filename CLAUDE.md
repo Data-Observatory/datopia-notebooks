@@ -188,3 +188,23 @@ en el repo de infraestructura (`do-aws_cdk_apps/apps/lakehouse/`).
       `BinderException`.
       Fix sugerido en infraestructura (`do-aws_cdk_apps/apps/lakehouse/`): corregir el typo en el
       handler de ingesta y regenerar `dataset.json` (incluir `lon`/`lat` si se mantienen).
+
+- [x] **Clave de particiones en `dataset.json` inestable — cambió de `partition_keys` a `partitioned_by` y volvió a `partition_keys`.**
+      El commit `b8c28c5` (2026-07-10) actualizó el notebook a `partitioned_by` porque el catálogo
+      había sido renombrado. Verificado en vivo el 2026-08-27: el catálogo volvió a usar
+      `partition_keys`. La clave del catálogo está flapping entre despliegues sin versionado.
+      Fix aplicado en notebook: `meta.get("partitioned_by") or meta.get("partition_keys")` para
+      tolerar ambas.
+      Fix sugerido en infraestructura: fijar un nombre único y estable para esta clave en el
+      generador de `dataset.json`, y versionar el esquema del catálogo para que cambios como este
+      sean detectables antes de llegar a producción.
+
+- [x] **Sección "Buses por día de semana" del notebook podía superar el timeout de celda (600 s).**
+      La celda original hacía 4 queries DuckDB separadas (una por mes, 7 días cada una), cada una
+      tomando ~65-70 s más overhead de replanificación — total >280 s, y en ejecuciones no
+      interactivas (nbconvert/CI) esto se acerca o supera timeouts típicos de 300-600 s.
+      Verificado con timing directo: una sola query combinada sobre los 28 días (`GROUP BY year,
+      month, day` en vez de un loop de 4 llamadas a `con.execute`) hace el mismo escaneo en ~194-224 s
+      — evita la replanificación repetida y aprovecha mejor los 16 threads de DuckDB.
+      Fix aplicado en notebook: consolidada la celda de la sección 5 en una sola query.
+      No requiere cambio en infraestructura — es un patrón de consulta del notebook, no del pipeline.
