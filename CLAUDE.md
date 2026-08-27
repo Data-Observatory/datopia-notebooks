@@ -13,11 +13,6 @@ texto en celdas markdown y nombres de variables descriptivas deben estar en espa
 El código técnico (nombres de funciones de librerías, parámetros de API, SQL, etc.) permanece en
 inglés porque es la convención de cada herramienta.
 
-La infraestructura vive en un repo privado separado: `do-aws_cdk_apps` (`apps/lakehouse/`).
-Si al probar un notebook aparece un bug o limitación en la API, documentarlo en la sección
-**Issues encontrados** al final de este archivo y proponer el fix en términos del handler Lambda
-o recurso CDK correspondiente.
-
 ---
 
 ## Estructura del repositorio
@@ -110,12 +105,16 @@ s3://do-datopia/categoria=transporte/pais=cl/fuente=red-movilidad/tipo=posicion-
 | `way` | string | Sentido: `I`=Ida, `R`=Retorno, vacío=sin sentido. |
 | `bus_route_consle` | string | Ruta por consola del bus, ej. `T201 00I`. |
 | `bus_route_assigned` | string | Ruta en Sinoptic (autoritativa), ej. `T201 03I`. |
-| `service_name` | string | Código de servicio Sinoptic, ej. `T515`. |
+| `operator_name` | string | Nombre de la concesionaria (empresa operadora), hermana de `operator_number`. |
 | `speed` | float | Velocidad instantánea (km/h). |
 | `direction` | int | Dirección cardinal 0–7: 0=N 1=NE 2=E 3=SE 4=S 5=SW 6=W 7=NW. |
 | `operator_number` | int | ID empresa operadora (1–15 zonas RED). |
-| `hour` | int | **Ausente en datos actuales.** Usar `EXTRACT(HOUR FROM timestamp_gps_utc)`. |
 | `geometry` | binary | WKB Point EPSG:4326. Predicados espaciales solo vía DuckDB. |
+
+No existe columna `hour` — usar `EXTRACT(HOUR FROM timestamp_gps_utc)::INTEGER`.
+No hay columna con el código de servicio Sinoptic (ej. `T515`); solo `bus_route_consle`/`bus_route_assigned`.
+La clave de particiones en `dataset.json` puede aparecer como `partition_keys` o `partitioned_by` según
+el despliegue — al leer el catálogo, aceptar ambas: `meta.get("partitioned_by") or meta.get("partition_keys")`.
 
 ---
 
@@ -132,6 +131,9 @@ s3://do-datopia/categoria=transporte/pais=cl/fuente=red-movilidad/tipo=posicion-
 - **Nunca** comitear URLs reales, passwords ni tokens.
 - **Estilo profesional:** badges en la primera celda markdown (ver abajo).
 - **Glob completo** (`**/*.parquet`) solo en análisis de cobertura total — advertir que es lento.
+- **Consultas multi-período:** combinar varios meses/días en una sola query (`GROUP BY` sobre una
+  lista de rutas) en vez de un loop de `con.execute()` por período — reduce el tiempo total
+  notablemente y evita superar timeouts de ejecución no interactiva (nbconvert/CI).
 
 ### Badges estándar para cada notebook
 
@@ -155,50 +157,3 @@ Primera celda markdown del notebook:
 | test | `do-lakehouse-datopia@dataobservatory.net` |
 
 Contraseñas en gestión interna — nunca en este repo.
-
----
-
-## Issues encontrados en testing
-
-Registrar aquí bugs o limitaciones descubiertas al ejecutar notebooks. Indicar el fix sugerido
-en el repo de infraestructura (`do-aws_cdk_apps/apps/lakehouse/`).
-
-- [x] **`/auth/session/s3` requiere `id_token`, no `access_token`.**
-      La documentación decía usar `access_token`, pero el endpoint Lambda valida el `id_token` de Cognito.
-      Fix aplicado en notebooks y en este archivo. No requiere cambio en infraestructura.
-
-- [ ] **Columna `hour` ausente en los archivos Parquet.**
-      Documentada como columna desnormalizada pero no existe en los datos (verificado con `DESCRIBE` en DuckDB 1.5.3).
-      Fix en notebooks: usar `EXTRACT(HOUR FROM timestamp_gps_utc)::INTEGER`.
-      Fix sugerido en infraestructura: agregar `hour` al pipeline de ingesta en `do-aws_cdk_apps/apps/lakehouse/`.
-
-- [x] **`dataset.json` (catálogo) desincronizado con el esquema real de los Parquet — `service_name` no existe.**
-      `dataset.json` declaraba `service_name` (código de servicio Sinoptic), con un comentario que
-      afirmaba que `operator_name` era un nombre "previamente incorrecto". Verificado en el pipeline
-      de ingesta (`do-scrapers`) y en TODO el histórico publicado (2025-09-09 → última fecha
-      disponible): nunca se produjo `service_name` — el campo siempre fue `operator_name` (nombre de
-      la concesionaria, hermano de `operator_number`), consistente con el propio
-      `ARCHITECTURE_PLAN.md` del pipeline. La idea de `service_name` no tenía respaldo en el código
-      ni en la API DTP. Corregido en catálogo (`do-aws_cdk_apps`, commit `42215b0`, vuelve a declarar
-      `operator_name`) y ya reflejado en notebook. Si en el futuro se quiere un código de servicio
-      Sinoptic real, es una feature nueva a evaluar contra la API DTP, no un fix.
-
-- [x] **Clave de particiones en `dataset.json` inestable — cambió de `partition_keys` a `partitioned_by` y volvió a `partition_keys`.**
-      El commit `b8c28c5` (2026-07-10) actualizó el notebook a `partitioned_by` porque el catálogo
-      había sido renombrado. Verificado en vivo el 2026-08-27: el catálogo volvió a usar
-      `partition_keys`. La clave del catálogo está flapping entre despliegues sin versionado.
-      Fix aplicado en notebook: `meta.get("partitioned_by") or meta.get("partition_keys")` para
-      tolerar ambas.
-      Fix sugerido en infraestructura: fijar un nombre único y estable para esta clave en el
-      generador de `dataset.json`, y versionar el esquema del catálogo para que cambios como este
-      sean detectables antes de llegar a producción.
-
-- [x] **Sección "Buses por día de semana" del notebook podía superar el timeout de celda (600 s).**
-      La celda original hacía 4 queries DuckDB separadas (una por mes, 7 días cada una), cada una
-      tomando ~65-70 s más overhead de replanificación — total >280 s, y en ejecuciones no
-      interactivas (nbconvert/CI) esto se acerca o supera timeouts típicos de 300-600 s.
-      Verificado con timing directo: una sola query combinada sobre los 28 días (`GROUP BY year,
-      month, day` en vez de un loop de 4 llamadas a `con.execute`) hace el mismo escaneo en ~194-224 s
-      — evita la replanificación repetida y aprovecha mejor los 16 threads de DuckDB.
-      Fix aplicado en notebook: consolidada la celda de la sección 5 en una sola query.
-      No requiere cambio en infraestructura — es un patrón de consulta del notebook, no del pipeline.
