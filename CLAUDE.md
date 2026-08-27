@@ -186,8 +186,16 @@ en el repo de infraestructura (`do-aws_cdk_apps/apps/lakehouse/`).
       `bus_route_consle` (falta la "o"). También aparecen `lon`/`lat` en los Parquet sin documentar
       en el catálogo. Rompe cualquier query que use el nombre correcto `bus_route_console` con
       `BinderException`.
-      Fix sugerido en infraestructura (`do-aws_cdk_apps/apps/lakehouse/`): corregir el typo en el
-      handler de ingesta y regenerar `dataset.json` (incluir `lon`/`lat` si se mantienen).
+      Confirmado el typo en TODO el histórico publicado (2025-09-09 → 2026-07-01, checkpoints en
+      sep/dic/ene/mar/may/jul) — no es una regresión reciente, viene del handler de ingesta desde
+      el día 1. Dado que ya hay ~275 días de Parquet publicados con el nombre `bus_route_consle`,
+      reescribir todo el histórico es caro; más barato corregir el catálogo para que declare
+      `bus_route_consle` (el nombre real) en vez de renombrar la columna en los archivos.
+      Fix sugerido en infraestructura (`do-aws_cdk_apps/apps/lakehouse/`): opción A (recomendada,
+      barata) — actualizar `dataset.json` para declarar `bus_route_consle` y documentar el typo
+      histórico; opción B (cara) — corregir el handler de ingesta a partir de ahora y aceptar que
+      el nombre de columna difiere entre Parquet viejos y nuevos, o reescribir el histórico. Incluir
+      `lon`/`lat` en el catálogo si se mantienen.
 
 - [x] **Clave de particiones en `dataset.json` inestable — cambió de `partition_keys` a `partitioned_by` y volvió a `partition_keys`.**
       El commit `b8c28c5` (2026-07-10) actualizó el notebook a `partitioned_by` porque el catálogo
