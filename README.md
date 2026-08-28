@@ -18,7 +18,7 @@ sin infraestructura propia. Compatible con Google Colab y entornos locales.
 
 | Categoría | Fuente | Cobertura | Notebook |
 |---|---|---|---|
-| Transporte | RED Movilidad (RM) | Sep 2025 → hoy (diario) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/transporte/red-movilidad/demo.ipynb) |
+| Transporte | RED Movilidad (RM) | Sep 2025 → hoy (diario; sin datos 2026-07-06 a 2026-08-28) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/transporte/red-movilidad/demo.ipynb) |
 | Medio físico | SINCA (calidad del aire) | 1971 → hoy (212 estaciones) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/medio-fisico/sinca/demo.ipynb) |
 
 ---
