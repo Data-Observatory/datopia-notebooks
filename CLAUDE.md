@@ -26,6 +26,12 @@ do-datopia-notebooks/
 ├── transporte/
 │   └── red-movilidad/
 │       └── demo.ipynb          ← dataset activo
+├── medio-fisico/
+│   └── sinca/
+│       └── demo.ipynb
+├── salud/
+│   └── deis-rem/
+│       └── demo.ipynb
 └── <categoria>/                ← nuevas categorías se agregan aquí
     └── <fuente>/
         └── demo.ipynb
@@ -115,6 +121,28 @@ No existe columna `hour` — usar `EXTRACT(HOUR FROM timestamp_gps_utc)::INTEGER
 No hay columna con el código de servicio Sinoptic (ej. `T515`); solo `bus_route_consle`/`bus_route_assigned`.
 La clave de particiones en `dataset.json` puede aparecer como `partition_keys` o `partitioned_by` según
 el despliegue — al leer el catálogo, aceptar ambas: `meta.get("partitioned_by") or meta.get("partition_keys")`.
+
+### salud / deis-rem
+
+**Ruta S3:**
+```
+s3://do-datopia/categoria=salud/pais=cl/fuente=deis/tipo=resumen-estadistico-mensual/version=v1/
+```
+
+**Particiones:** `anio=YYYY/part-00000.parquet` (una por año) + tablas `codigos-rem/`,
+`codigos-rem-prestaciones/`, `codigos-rem-col-numericas/`
+**Cobertura:** 2009 → 2026 (mensual)
+**Escala:** ~1 930 M filas en total · 55–240 MB por año
+
+**Columnas (hechos):** `anio`, `mes`, `tipo_serie` (`a`/`bs`/`bm`/`d`/`p`), `id_establecimiento`,
+`cod_prestacion`, `cod_col_numerica`, `cantidad`, `flags_procesamiento`.
+
+**`codigos-rem`** traduce los códigos por año: `cod_hoja`/`nombre_hoja` → `nombre_seccion` →
+`cod_prestacion`/`nombre_prestacion` → `cod_col_numerica`/`nombre_col_numerica`. Etiquetas con
+formato `dimensión| valor; dimensión| valor`. Unir por (`anio`, `cod_prestacion`, `cod_col_numerica`).
+
+- Buscar por texto en `codigos-rem` y bajar por la jerarquía hoja → sección → prestación → columna.
+- Filtrar siempre por `anio` y `cod_prestacion`; `SET threads=128` acelera la lectura remota.
 
 ---
 

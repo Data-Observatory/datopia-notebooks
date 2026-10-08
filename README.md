@@ -2,7 +2,7 @@
 
 [![Licencia](https://img.shields.io/badge/licencia-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)]()
-[![Datasets](https://img.shields.io/badge/datasets-2-green.svg)]()
+[![Datasets](https://img.shields.io/badge/datasets-3-green.svg)]()
 [![Actualización](https://img.shields.io/badge/actualización-diaria-brightgreen.svg)]()
 [![Región](https://img.shields.io/badge/AWS-us--west--2-orange.svg)]()
 
@@ -20,6 +20,7 @@ sin infraestructura propia. Compatible con Google Colab y entornos locales.
 |---|---|---|---|
 | Transporte | RED Movilidad (RM) | Sep 2025 → hoy (diario; sin datos 2026-07-06 a 2026-08-28) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/transporte/red-movilidad/demo.ipynb) |
 | Medio físico | SINCA (calidad del aire) | 1971 → hoy (212 estaciones) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/medio-fisico/sinca/demo.ipynb) |
+| Salud | DEIS — Resumen Estadístico Mensual (REM) | 2009 → hoy (mensual, red pública) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/salud/deis-rem/demo.ipynb) |
 
 ---
 
