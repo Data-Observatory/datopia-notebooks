@@ -9,16 +9,21 @@ hoy, ~1.900 millones de filas.
 
 **Ruta S3:**
 ```
-s3://do-datopia/categoria=salud/pais=cl/fuente=deis/tipo=resumen-estadistico-mensual/version=v1/
-├── anio=YYYY/part-00000.parquet     ← tabla de hechos, una partición por año (2009-2026)
-├── codigos-rem/part-*.parquet       ← diccionario de códigos (pocos MB)
-├── codigos-rem-prestaciones/        ← jerarquía de etiquetas de prestaciones (clave/valor/nivel)
-├── codigos-rem-col-numericas/       ← jerarquía de etiquetas de columnas (clave/valor/nivel)
-├── dataset.json                     ← metadatos y esquema
-└── manifest.json                    ← filas y bytes por partición
+s3://do-datopia/categoria=salud/pais=cl/fuente=deis/
+├── tipo=resumen-estadistico-mensual/version=v1/
+│   ├── year=YYYY/part-00000.parquet     ← tabla de hechos, una partición por año (2009-2026)
+│   ├── dataset.json                     ← metadatos y esquema
+│   └── manifest.json                    ← filas y bytes por partición
+├── tipo=codigos-rem/version=v1/part-00000.parquet        ← diccionario de códigos (pocos MB, columna `year`)
+├── tipo=codigos-rem-prestaciones/version=v1/             ← jerarquía de etiquetas de prestaciones (clave/valor/nivel)
+├── tipo=codigos-rem-col-numericas/version=v1/            ← jerarquía de etiquetas de columnas (clave/valor/nivel)
+├── tipo=establecimientos-salud/version=v1/               ← establecimientos de salud
+└── tipo=establecimientos-salud-historial/version=v1/     ← historial de los establecimientos
 ```
 
-**Formato largo.** Una fila por (`anio`, `mes`, `id_establecimiento`, `cod_prestacion`,
+El diccionario es un dataset hermano de los hechos (otro `tipo=`), no un subdirectorio de ellos.
+
+**Formato largo.** Una fila por (`year`, `mes`, `id_establecimiento`, `cod_prestacion`,
 `cod_col_numerica`) con su `cantidad`. Unifica las 5 series de origen (`tipo_serie`: `a`, `bs`,
 `bm`, `d`, `p`), que DEIS publica como CSV anchos (una columna `ColNN` por corte).
 
@@ -26,12 +31,12 @@ s3://do-datopia/categoria=salud/pais=cl/fuente=deis/tipo=resumen-estadistico-men
 formulario REM: `cod_hoja`/`nombre_hoja` (el formulario) → `nombre_seccion` → `cod_prestacion`/
 `nombre_prestacion` (la fila) → `cod_col_numerica`/`nombre_col_numerica` (la columna: total, sexo,
 edad...). Las etiquetas usan el formato `dimensión| valor`, con varias dimensiones separadas por
-`;` (p. ej. `tipo de conteo| total; sexo| ambos sexos`). Unir por
-(`anio`, `cod_prestacion`, `cod_col_numerica`).
+`;` (p. ej. `tipo de conteo| total; sexo| ambos sexos`).
+`cod_prestacion` va en minúscula en ambas tablas. Unir por (`year`, `cod_prestacion`, `cod_col_numerica`).
 
 **Flujo recomendado: buscar por texto, no por código.** `nombre_prestacion ILIKE '%...%'` en
 `codigos-rem` → elegir hoja y sección → listar columnas → revisar años disponibles → recién ahí leer
-los hechos filtrando por `anio` y `cod_prestacion`. `demo.ipynb` trae funciones para cada paso
+los hechos filtrando por `year` y `cod_prestacion`. `demo.ipynb` trae funciones para cada paso
 (`buscar`, `prestaciones`, `columnas_de`, `anios_disponibles`, `serie`).
 
 **Qué cuenta `cantidad`.** Depende de la prestación: consultas, kilos, personas... Las columnas que
@@ -40,7 +45,7 @@ largo de los meses sin contar a la misma persona varias veces; usar promedios o 
 La serie P (población en control) se reporta solo en junio y diciembre.
 
 **Rendimiento.** Cada partición anual pesa 55-240 MB. Leer una prestación en un año toma menos de un
-minuto; 9 años, 1-2 minutos. Filtrar siempre por `anio` y `cod_prestacion`; subir `threads` en
+minuto; 9 años, 1-2 minutos. Filtrar siempre por `year` y `cod_prestacion`; subir `threads` en
 DuckDB (`SET threads=128`) acelera mucho la lectura remota.
 
 ## Archivos

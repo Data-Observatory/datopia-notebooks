@@ -124,25 +124,28 @@ el despliegue — al leer el catálogo, aceptar ambas: `meta.get("partitioned_by
 
 ### salud / deis-rem
 
-**Ruta S3:**
+**Ruta S3 (hechos):**
 ```
 s3://do-datopia/categoria=salud/pais=cl/fuente=deis/tipo=resumen-estadistico-mensual/version=v1/
 ```
 
-**Particiones:** `anio=YYYY/part-00000.parquet` (una por año) + tablas `codigos-rem/`,
-`codigos-rem-prestaciones/`, `codigos-rem-col-numericas/`
+**Particiones:** `year=YYYY/part-00000.parquet` (una por año, 2009-2026).
+**Diccionario:** dataset hermano `tipo=codigos-rem/version=v1/part-00000.parquet` (columna `year`), no
+un subdirectorio de los hechos. Hermanos: `codigos-rem-prestaciones`, `codigos-rem-col-numericas`,
+`establecimientos-salud`, `establecimientos-salud-historial` (todos `version=v1`).
 **Cobertura:** 2009 → 2026 (mensual)
 **Escala:** ~1 930 M filas en total · 55–240 MB por año
 
-**Columnas (hechos):** `anio`, `mes`, `tipo_serie` (`a`/`bs`/`bm`/`d`/`p`), `id_establecimiento`,
+**Columnas (hechos):** `year`, `mes`, `tipo_serie` (`a`/`bs`/`bm`/`d`/`p`), `id_establecimiento`,
 `cod_prestacion`, `cod_col_numerica`, `cantidad`, `flags_procesamiento`.
 
 **`codigos-rem`** traduce los códigos por año: `cod_hoja`/`nombre_hoja` → `nombre_seccion` →
 `cod_prestacion`/`nombre_prestacion` → `cod_col_numerica`/`nombre_col_numerica`. Etiquetas con
-formato `dimensión| valor; dimensión| valor`. Unir por (`anio`, `cod_prestacion`, `cod_col_numerica`).
+formato `dimensión| valor; dimensión| valor`. `cod_prestacion` va en minúscula en ambas tablas.
+Unir por (`year`, `cod_prestacion`, `cod_col_numerica`).
 
 - Buscar por texto en `codigos-rem` y bajar por la jerarquía hoja → sección → prestación → columna.
-- Filtrar siempre por `anio` y `cod_prestacion`; `SET threads=128` acelera la lectura remota.
+- Filtrar siempre por `year` y `cod_prestacion`; `SET threads=128` acelera la lectura remota.
 
 ---
 
