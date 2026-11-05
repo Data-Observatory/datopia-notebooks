@@ -1,7 +1,7 @@
 # SINCA — Calidad del Aire y Meteorología
 
 Dataset de calidad del aire y meteorología de **SINCA** (Sistema de Información Nacional de
-Calidad del Aire), operado por el Ministerio del Medio Ambiente de Chile. 212 estaciones activas
+Calidad del Aire), operado por el Ministerio del Medio Ambiente de Chile. Más de 200 estaciones activas
 en las 16 regiones de Chile, cobertura desde 1971 (red completa desde 2000).
 
 ## Notas sobre los datos
@@ -45,7 +45,7 @@ mediciones — las fechas de cobertura real (`fecha_primer_registro`/`fecha_ulti
 en `tipo=estaciones-variables`, por combinación estación-variable-periodicidad.
 
 **No todas las estaciones miden todas las variables.** `tipo=estaciones-variables` indica qué
-variables mide cada estación. PM2.5 es la más extendida (~96 de 212 estaciones activas), pero
+variables mide cada estación. PM2.5 es la más extendida (menos de la mitad de las estaciones activas), pero
 gases específicos (p. ej. hidrocarburos NMHC/THCM/CH4, unidad ppm) solo se miden en unas pocas
 estaciones industriales (zona de Quintero-Puchuncaví, Región de Valparaíso).
 
@@ -54,7 +54,7 @@ realmente aparecen en `tipo=estaciones-variables` (faltan `CORG`, `CTOT`, `TRSG`
 nombre/unidad documentados; su significado no pudo confirmarse contra la fuente SINCA, así que
 se dejaron fuera deliberadamente en vez de adivinar).
 
-**Estaciones sin geometría.** 2 de las 212 estaciones activas (Punta Chungo, Rural 1) no tienen
+**Estaciones sin geometría.** Algunas estaciones activas (Punta Chungo, Rural 1) no tienen
 coordenadas válidas en la fuente SINCA — `geometry`/`lon`/`lat` son nulos para esas filas; no
 asumir que todas las estaciones tienen ubicación.
 
