@@ -32,6 +32,9 @@ do-datopia-notebooks/
 ├── salud/
 │   └── deis-rem/
 │       └── demo.ipynb
+├── sociologia/
+│   └── ine/
+│       └── demo.ipynb
 └── <categoria>/                ← nuevas categorías se agregan aquí
     └── <fuente>/
         └── demo.ipynb
@@ -167,6 +170,39 @@ Unir por (`year`, `cod_prestacion`, `cod_col_numerica`).
 
 - Buscar por texto en `codigos-rem` y bajar por la jerarquía hoja → sección → prestación → columna.
 - Filtrar siempre por `year` y `cod_prestacion`; `SET threads=128` acelera la lectura remota.
+
+### sociologia / ine
+
+**Ruta S3 (base):** `s3://do-datopia/categoria=sociologia/pais=cl/fuente=ine/` — cuatro tablas:
+
+| `tipo=` / `version=` | Contenido | Escala |
+|---|---|---|
+| `censos-poblacionales/version=v1w` | Microdatos Censos 2017 y 2024, formato **ancho** (una columna por variable) | ~62 M filas |
+| `censos-poblacionales/version=v1l` | Los mismos registros, formato **largo** (`pregunta`, `respuesta`) | ~1 600 M filas |
+| `division-territorial-censal/version=v1` | Geografía censal (2017: zona/localidad; 2024: comuna) | ~16 mil filas |
+| `preguntas-respuestas-censo/version=v1` | Diccionario de preguntas y respuestas (`descripcion_pregunta` = `pregunta` del largo) | ~1 200 filas |
+
+**Particiones (solo `censos-poblacionales`):** `year=YYYY/tipo_registro=<viviendas|hogares|personas>/part-NNNNN.parquet`.
+Las otras dos tablas no tienen particiones (`part-00000.parquet`).
+**Cobertura:** censos 2017 y 2024 (estático; sin actualización periódica).
+**Cada año y cada `tipo_registro` guarda solo sus columnas**: leer con `hive_partitioning=true,
+union_by_name=true` (lo ausente queda nulo). El `dataset.json` del ancho describe las ~100 columnas.
+
+**Unir unidades (trampas):**
+- Solo `viviendas` trae `cod_comuna`; hogares y personas llegan a la comuna por su vivienda.
+- 2017: los ids son relativos a la zona → vivienda = (`id_zona_censal_local`, `id_vivienda`); `id_vivienda`
+  solo no es único. 2024: `id_vivienda` es global. Unir con `IS NOT DISTINCT FROM` sobre
+  `id_zona_censal_local` sirve para ambos años.
+- Hogar = vivienda + `id_hogar`; persona = hogar + `id_persona`.
+- `division-territorial-censal` en 2017 tiene una fila por zona: para comuna → región usar
+  `SELECT DISTINCT cod_comuna, ..., cod_region, nombre_region` (346 comunas, 16 regiones).
+- `tipo_registro` va en plural en los microdatos y en singular en el diccionario.
+
+Otras notas: `grupo_etario` es texto (ordenar a mano: `'5-9'` queda tras `'45-49'`); nombres de región/comuna
+vienen en minúscula y sin tildes; las etiquetas cambian entre censos (`departamento en edificio` 2017 →
+`departamento` 2024); el largo de 2024 omite respuestas vacías pero el de 2017 trae filas con `respuesta` nula
+(filtrar `respuesta IS NOT NULL` al comparar años); el diccionario da 10 preguntas de vivienda, 2 de hogar y 15 de persona con el mismo texto en ambos censos
+(el largo de 2017 trae datos de 8 de las 10 de vivienda); misma pregunta ≠ mismas etiquetas de respuesta; **no recorrer `personas` largo completo** (>1 300 M filas).
 
 ---
 
