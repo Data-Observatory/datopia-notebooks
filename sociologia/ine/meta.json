@@ -1,0 +1,19 @@
+{
+  "format": "Parquet",
+  "es": {
+    "name": "INE Censos",
+    "category": "Sociología",
+    "source": "INE — Censos de Población y Vivienda",
+    "coverage": "Censos {anios_es} (microdatos por vivienda, hogar y persona)",
+    "coverage_fallback": "Censos 2017 y 2024 (microdatos por vivienda, hogar y persona)",
+    "description": "Microdatos de los Censos de Población y Vivienda del INE en formato ancho y largo, con geografía censal y diccionario de preguntas."
+  },
+  "en": {
+    "name": "INE Censuses",
+    "category": "Sociology",
+    "source": "INE — Population and Housing Censuses",
+    "coverage": "{anios_en} censuses (microdata by dwelling, household and person)",
+    "coverage_fallback": "2017 and 2024 censuses (microdata by dwelling, household and person)",
+    "description": "Microdata of the INE Population and Housing Censuses in wide and long format, with census geography and a questions dictionary."
+  }
+}

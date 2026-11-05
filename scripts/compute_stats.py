@@ -124,6 +124,31 @@ def stats_deis_rem(con, bucket):
     return {"anio_inicio": first_year, "anio_fin": last_year, "anios_con_datos": n_years}
 
 
+def stats_ine(con, bucket):
+    base = (
+        f"s3://{bucket}/categoria=sociologia/pais=cl/fuente=ine"
+        "/tipo=censos-poblacionales/version=v1w"
+    )
+
+    # Años censales: se leen del nombre de las particiones year=YYYY (solo listado S3)
+    years = [
+        row[0]
+        for row in con.execute(f"""
+            SELECT DISTINCT regexp_extract(file, 'year=(\\d+)', 1)::INTEGER AS year
+            FROM glob('{base}/year=*/tipo_registro=*/part-*.parquet')
+            ORDER BY year
+        """).fetchall()
+    ]
+
+    return {
+        "anio_inicio": years[0],
+        "anio_fin": years[-1],
+        "censos": len(years),
+        "anios_es": " y ".join([", ".join(map(str, years[:-1])), str(years[-1])]) if len(years) > 1 else str(years[0]),
+        "anios_en": " and ".join([", ".join(map(str, years[:-1])), str(years[-1])]) if len(years) > 1 else str(years[0]),
+    }
+
+
 def format_gaps(ranges, template_one_day, template_range, template_many):
     """Texto corto de períodos sin datos; vacío si no hay."""
     if not ranges:
@@ -183,6 +208,7 @@ DATASETS = {
     "sinca": ("medio-fisico/sinca", stats_sinca),
     "deis-rem": ("salud/deis-rem", stats_deis_rem),
     "red-movilidad": ("transporte/red-movilidad", stats_red_movilidad),
+    "ine": ("sociologia/ine", stats_ine),
 }
 
 
