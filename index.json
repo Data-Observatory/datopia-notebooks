@@ -1,0 +1,59 @@
+[
+  {
+    "id": "deis-rem",
+    "path": "salud/deis-rem/demo.ipynb",
+    "format": "Parquet",
+    "es": {
+      "name": "DEIS REM",
+      "category": "Salud",
+      "source": "DEIS — Resumen Estadístico Mensual (REM)",
+      "coverage": "2009 → hoy (mensual, red pública)",
+      "description": "Resumen Estadístico Mensual del sistema público de salud: prestaciones registradas por establecimiento."
+    },
+    "en": {
+      "name": "DEIS REM",
+      "category": "Health",
+      "source": "DEIS — Monthly Statistical Summary (REM)",
+      "coverage": "2009 → today (monthly, public network)",
+      "description": "Monthly Statistical Summary of Chile's public health system: services recorded per health facility."
+    }
+  },
+  {
+    "id": "red-movilidad",
+    "path": "transporte/red-movilidad/demo.ipynb",
+    "format": "GeoParquet",
+    "es": {
+      "name": "RED Movilidad",
+      "category": "Transporte",
+      "source": "RED Movilidad (RM)",
+      "coverage": "2025-09-09 → hoy (diario; sin datos 2026-07-07 a 2026-08-27)",
+      "description": "Posiciones GPS de la flota de buses de RED Movilidad, con actualización diaria y geometría de puntos."
+    },
+    "en": {
+      "name": "RED Movilidad",
+      "category": "Transport",
+      "source": "RED Movilidad (RM)",
+      "coverage": "2025-09-09 → today (daily; no data 2026-07-07 to 2026-08-27)",
+      "description": "GPS positions of the RED Movilidad bus fleet, updated daily, with point geometry."
+    }
+  },
+  {
+    "id": "sinca",
+    "path": "medio-fisico/sinca/demo.ipynb",
+    "format": "Parquet",
+    "es": {
+      "name": "SINCA",
+      "category": "Medio físico",
+      "source": "SINCA (calidad del aire)",
+      "coverage": "1971 → hoy (226 estaciones activas)",
+      "description": "Calidad del aire y meteorología: monitoreo histórico en más de 200 estaciones de las 16 regiones de Chile."
+    },
+    "en": {
+      "name": "SINCA",
+      "category": "Physical environment",
+      "source": "SINCA (air quality)",
+      "coverage": "1971 → today (226 active stations)",
+      "description": "Air quality and meteorology: historical monitoring at over 200 stations across Chile's 16 regions."
+    }
+  }
+]

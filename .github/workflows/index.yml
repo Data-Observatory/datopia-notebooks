@@ -1,0 +1,17 @@
+name: Validar index.json
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verificar que index.json está al día
+        run: python scripts/build_index.py --check

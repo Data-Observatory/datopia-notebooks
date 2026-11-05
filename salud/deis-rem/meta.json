@@ -1,0 +1,19 @@
+{
+  "format": "Parquet",
+  "es": {
+    "name": "DEIS REM",
+    "category": "Salud",
+    "source": "DEIS — Resumen Estadístico Mensual (REM)",
+    "coverage": "{anio_inicio} → hoy (mensual, red pública)",
+    "coverage_fallback": "Desde 2009 (mensual, red pública)",
+    "description": "Resumen Estadístico Mensual del sistema público de salud: prestaciones registradas por establecimiento."
+  },
+  "en": {
+    "name": "DEIS REM",
+    "category": "Health",
+    "source": "DEIS — Monthly Statistical Summary (REM)",
+    "coverage": "{anio_inicio} → today (monthly, public network)",
+    "coverage_fallback": "Since 2009 (monthly, public network)",
+    "description": "Monthly Statistical Summary of Chile's public health system: services recorded per health facility."
+  }
+}

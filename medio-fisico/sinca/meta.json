@@ -1,0 +1,19 @@
+{
+  "format": "Parquet",
+  "es": {
+    "name": "SINCA",
+    "category": "Medio físico",
+    "source": "SINCA (calidad del aire)",
+    "coverage": "{anio_inicio} → hoy ({estaciones_activas} estaciones activas)",
+    "coverage_fallback": "Desde 1971 (+200 estaciones)",
+    "description": "Calidad del aire y meteorología: monitoreo histórico en más de 200 estaciones de las 16 regiones de Chile."
+  },
+  "en": {
+    "name": "SINCA",
+    "category": "Physical environment",
+    "source": "SINCA (air quality)",
+    "coverage": "{anio_inicio} → today ({estaciones_activas} active stations)",
+    "coverage_fallback": "Since 1971 (200+ stations)",
+    "description": "Air quality and meteorology: historical monitoring at over 200 stations across Chile's 16 regions."
+  }
+}

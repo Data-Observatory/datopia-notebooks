@@ -42,6 +42,27 @@ Cada dataset vive en `<categoria>/<fuente>/`. Al agregar un nuevo dataset:
 2. Copiar la estructura de `transporte/red-movilidad/demo.ipynb` como plantilla.
 3. Actualizar `README.md` raíz con el nuevo badge "Open in Colab".
 4. Registrar el dataset en la sección **Datasets disponibles** de este archivo.
+5. Crear `meta.json` junto al notebook (copiar uno existente) y correr
+   `python scripts/build_index.py`; commitear `index.json` junto con el resto.
+6. Opcional, si el texto de `coverage` usa cifras reales: agregar una función en
+   `scripts/compute_stats.py` y correr `python scripts/compute_stats.py <fuente>`.
+
+### Índice y cifras generadas
+
+- `index.json` (raíz) lo lee el sitio web. **Nunca editarlo a mano**: sale de `meta.json` +
+  `stats.json` vía `scripts/build_index.py` (solo biblioteca estándar, sin red). CI corre
+  `--check` en cada PR y push a `main`.
+- `meta.json` (`format`, `es`, `en`) es la fuente de los textos. `id` y `path` los deriva el script
+  del nombre de carpeta.
+- Cifras que cambian (estaciones, años, fechas) **no se escriben a mano**: `coverage` puede llevar
+  campos `{entre_llaves}` que se rellenan desde `stats.json`, y `coverage_fallback` (obligatorio si
+  hay campos) con texto aproximado ("+200 estaciones") que se usa si falta el `stats.json`.
+- `stats.json` lo genera `scripts/compute_stats.py` con consultas baratas (listados S3, footers de
+  Parquet, tablas chicas; **nunca** tablas de hechos). Credenciales: `config.json` o
+  `DATOPIA_EMAIL`/`DATOPIA_PASSWORD`. Correrlo a mano cuando se quiera refrescar y commitear
+  `stats.json` + `index.json`.
+- En notebooks y READMEs, evitar cifras exactas que envejecen ("212 estaciones"): usar redondeos
+  estables ("más de 200") o cifras con fecha.
 
 ---
 
