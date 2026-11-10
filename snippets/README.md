@@ -13,7 +13,13 @@ reemplaza la primera línea por el bloque de `conexion/login-api/`.
 
 ## JSON para el sitio
 
-`snippets.es.json` y `snippets.en.json` (raíz del repo) se generan desde esta carpeta; **no se editan
-a mano**: `python scripts/build_snippets.py`. Cada snippet se escribe en español; la versión en inglés
-aplica las sustituciones de `traducciones-en.json`. Lenguajes, librerías y escenarios se declaran en
-`meta.json`. Al agregar un snippet: crear el archivo, registrarlo en `meta.json`, generar y commitear.
+`snippets.json` (raíz del repo) se genera desde esta carpeta; **no se edita a mano**:
+`python scripts/build_snippets.py`. Trae todos los idiomas: cada texto y cada `code` es un objeto por
+idioma (`{"es": ..., "en": ...}`) y `locales` los lista. Cada snippet se escribe en español; los demás
+idiomas aplican las sustituciones de `traducciones-<idioma>.json`. Lenguajes, librerías y escenarios se
+declaran en `meta.json`.
+
+- **Agregar un snippet:** crear el archivo, registrarlo en `meta.json`, generar y commitear.
+- **Agregar un idioma:** crear `traducciones-<idioma>.json` (copiar `traducciones-en.json`), agregar el
+  idioma a cada texto de `meta.json` (`scenarios` y `lazy_note`) y generar. En idiomas que comparten
+  palabras con el español (portugués) agregar `"omitir_chequeo_restos": true` al archivo de traducciones.

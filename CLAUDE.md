@@ -23,7 +23,7 @@ do-datopia-notebooks/
 ├── README.md
 ├── config.example.json
 ├── index.json                  ← catálogo para el sitio (generado)
-├── snippets.es.json / snippets.en.json   ← snippets para el sitio (generados)
+├── snippets.json               ← snippets para el sitio, todos los idiomas (generado)
 ├── notebooks/
 │   ├── transporte/
 │   │   └── red-movilidad/
@@ -63,9 +63,9 @@ Esos stubs son temporales: eliminarlos cuando ya no se usen los enlaces antiguos
 
 ### Snippets de conexión
 
-`snippets/` tiene el código (un archivo por herramienta y escenario). `snippets.es.json` y
-`snippets.en.json` los consume el sitio y salen de `python scripts/build_snippets.py` (CI corre
-`--check`). Nunca editar esos JSON a mano; ver `snippets/README.md`.
+`snippets/` tiene el código (un archivo por herramienta y escenario). `snippets.json` (todos los
+idiomas en un solo archivo) lo consume el sitio y sale de `python scripts/build_snippets.py` (CI corre
+`--check`). Nunca editarlo a mano; ver `snippets/README.md`.
 
 ### Índice y cifras generadas
 

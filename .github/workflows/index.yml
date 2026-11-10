@@ -15,7 +15,7 @@ jobs:
           python-version: "3.12"
       - name: Verificar que index.json está al día
         run: python scripts/build_index.py --check
-      - name: Verificar que snippets.es.json y snippets.en.json están al día
+      - name: Verificar que snippets.json está al día
         run: python scripts/build_snippets.py --check
       - name: Verificar que los enlaces antiguos apuntan a notebooks que existen
         run: python scripts/check_moved.py
