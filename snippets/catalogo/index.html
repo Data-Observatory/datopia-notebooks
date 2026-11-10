@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catálogo Datopia</title>
+<style>
+  :root { --fondo:#fafafa; --texto:#1c1f23; --suave:#5b6470; --borde:#d9dde3; --tarjeta:#fff; --acento:#0b6bcb; --chip:#e8f0fb; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fondo:#14171a; --texto:#e6e8eb; --suave:#9aa4b0; --borde:#2d333b; --tarjeta:#1b1f24; --acento:#6cb2ff; --chip:#1f2a38; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 system-ui, sans-serif; background:var(--fondo); color:var(--texto); }
+  header { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid var(--borde); }
+  header h1 { margin:0; font-size:18px; }
+  button { font:inherit; color:inherit; background:var(--tarjeta); border:1px solid var(--borde); border-radius:6px; padding:4px 12px; cursor:pointer; }
+  button[aria-pressed="true"] { background:var(--acento); border-color:var(--acento); color:#fff; }
+  main { max-width:1100px; margin:0 auto; padding:16px; }
+  .grupos { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px; margin-bottom:20px; }
+  .grupos button { text-align:left; padding:10px 12px; }
+  .grupos small { display:block; color:var(--suave); }
+  .grupos button[aria-pressed="true"] small { color:#e6efff; }
+  h2 { margin:0 0 4px; font-size:22px; }
+  .suave { color:var(--suave); }
+  .chip { display:inline-block; background:var(--chip); border-radius:99px; padding:1px 10px; margin:2px 4px 2px 0; font-size:13px; }
+  details.tabla { background:var(--tarjeta); border:1px solid var(--borde); border-radius:8px; margin:12px 0; padding:0 14px; }
+  details.tabla > summary { cursor:pointer; padding:12px 0; font-weight:600; }
+  details.tabla > summary span { font-weight:400; color:var(--suave); margin-left:8px; font-size:13px; }
+  dl { display:grid; grid-template-columns:max-content 1fr; gap:2px 14px; margin:8px 0 12px; }
+  dt { color:var(--suave); }
+  dd { margin:0; }
+  .scroll { overflow-x:auto; margin-bottom:14px; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { text-align:left; vertical-align:top; padding:6px 8px; border-bottom:1px solid var(--borde); }
+  th { color:var(--suave); font-weight:600; white-space:nowrap; }
+  code { font-size:13px; }
+  a { color:var(--acento); }
+  summary { cursor:pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="titulo"></h1>
+  <div><button id="es" aria-pressed="true">ES</button> <button id="en" aria-pressed="false">EN</button></div>
+</header>
+<main>
+  <div id="error" class="suave"></div>
+  <div class="grupos" id="grupos"></div>
+  <div id="detalle"></div>
+</main>
+
+<script>
+// Datos públicos, sin credenciales (CORS abierto).
+const BASE = "https://datopia.dataobservatory.net/_meta/";
+
+const TEXTOS = {
+  es: { titulo: "Catálogo Datopia", cargando: "Cargando…", error: "No se pudo cargar el catálogo: ",
+        tablas: "Tablas", ejemplos: "Ejemplos de uso", diccionario: "Diccionario de datos",
+        columna: "Columna", tipo: "Tipo", rol: "Rol", etiqueta: "Etiqueta", descripcion: "Descripción",
+        unidad: "Unidad", codigos: "Códigos", grano: "Una fila por", entidad: "Entidad", particiones: "Particiones",
+        anios: "Años", filas: "Filas", actualizado: "Actualizado", fuente: "Fuente", licencia: "Licencia",
+        ruta: "Ruta S3", notebook: "Notebook", clave: "Clave primaria", relaciones: "Relaciones", ninguna: "—",
+        sinCols: "Sin columnas documentadas" },
+  en: { titulo: "Datopia catalog", cargando: "Loading…", error: "Could not load the catalog: ",
+        tablas: "Tables", ejemplos: "Usage examples", diccionario: "Data dictionary",
+        columna: "Column", tipo: "Type", rol: "Role", etiqueta: "Label", descripcion: "Description",
+        unidad: "Unit", codigos: "Codes", grano: "One row per", entidad: "Entity", particiones: "Partitions",
+        anios: "Years", filas: "Rows", actualizado: "Updated", fuente: "Source", licencia: "License",
+        ruta: "S3 path", notebook: "Notebook", clave: "Primary key", relaciones: "Relations", ninguna: "—",
+        sinCols: "No documented columns" },
+};
+
+let idioma = "es", modelo = null, estado = {}, grupoActual = null;
+
+// Crea elementos sin innerHTML: el contenido siempre entra como texto.
+function h(tag, attrs = {}, ...hijos) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") el.className = v; else if (v != null) el.setAttribute(k, v);
+  }
+  for (const hijo of hijos.flat()) if (hijo != null) el.append(hijo);
+  return el;
+}
+const t = (clave) => TEXTOS[idioma][clave];
+const txt = (bloque) => (bloque && (bloque[idioma] ?? bloque.es ?? bloque.en)) || "";
+
+function fila(etiqueta, valor) {
+  return valor == null || valor === "" ? [] : [h("dt", {}, etiqueta), h("dd", {}, valor)];
+}
+
+function diccionario(ds) {
+  if (!ds.columns?.length) return h("p", { class: "suave" }, t("sinCols"));
+  const cuerpo = ds.columns.map((c) => {
+    const textos = c.i18n?.[idioma] || c.i18n?.es || {};
+    const codigos = c.codes?.length
+      ? h("details", {}, h("summary", {}, `${c.codes.length}`),
+          h("div", {}, c.codes.map((k) => h("div", {}, h("code", {}, String(k.value)), " ", txt({ es: k.i18n?.es?.label, en: k.i18n?.en?.label })))))
+      : "";
+    return h("tr", {}, h("td", {}, h("code", {}, c.name)), h("td", {}, c.type), h("td", {}, c.role || ""),
+             h("td", {}, textos.label || ""), h("td", {}, textos.description || ""), h("td", {}, c.unit || ""), h("td", {}, codigos));
+  });
+  return h("div", { class: "scroll" }, h("table", {},
+    h("thead", {}, h("tr", {}, ["columna", "tipo", "rol", "etiqueta", "descripcion", "unidad", "codigos"].map((k) => h("th", {}, t(k))))),
+    h("tbody", {}, cuerpo)));
+}
+
+function tarjetaTabla(ds, abierta) {
+  const st = estado[ds.id] || {};
+  const d = ds.i18n?.[idioma] || ds.i18n?.es || {};
+  const años = ds.year_range ? ds.year_range.join(" – ") : null;
+  const fk = (ds.foreign_keys || []).map((f) => `${f.columns.join(", ")} → ${f.references.tipo}`).join("; ");
+  const detalles = h("dl", {},
+    fila(t("grano"), ds.grain), fila(t("entidad"), ds.entity_type),
+    fila(t("particiones"), ds.partition_keys?.length ? ds.partition_keys.join(", ") : null), fila(t("anios"), años),
+    fila(t("filas"), st.row_count?.toLocaleString(idioma)), fila(t("actualizado"), st.last_updated_utc?.slice(0, 10)),
+    fila(t("clave"), ds.primary_key?.join(", ")), fila(t("relaciones"), fk || null),
+    fila(t("fuente"), ds.source?.url ? h("a", { href: ds.source.url, target: "_blank", rel: "noopener" }, ds.source.name) : ds.source?.name),
+    fila(t("licencia"), ds.license), fila(t("ruta"), h("code", {}, ds.s3_prefix)),
+    fila(t("notebook"), ds.notebook_url ? h("a", { href: ds.notebook_url, target: "_blank", rel: "noopener" }, "demo.ipynb") : null));
+  const el = h("details", { class: "tabla" },
+    h("summary", {}, d.title || ds.tipo, h("span", {}, `${ds.tipo} · ${ds.version}`)),
+    h("p", {}, d.description || ds.description), detalles,
+    h("h3", {}, t("diccionario")), diccionario(ds));
+  if (abierta) el.open = true;
+  return el;
+}
+
+function pintarGrupo() {
+  const g = modelo.dataset_groups.find((x) => x.id === grupoActual);
+  const tablas = g.datasets.map((id) => modelo.datasets.find((d) => d.id === id)).filter(Boolean);
+  const ejemplos = g.examples?.[idioma] || [];
+  const claves = g.keywords?.[idioma] || [];
+  document.getElementById("detalle").replaceChildren(
+    h("h2", {}, txt(g.title)),
+    h("p", {}, txt(g.description)),
+    h("p", { class: "suave" }, txt(g.indicators)),
+    h("div", {}, claves.map((k) => h("span", { class: "chip" }, k))),
+    ejemplos.length ? h("p", { class: "suave" }, `${t("ejemplos")}: ${ejemplos.join(" · ")}`) : "",
+    h("h3", {}, `${t("tablas")} (${tablas.length})`),
+    tablas.map((ds, i) => tarjetaTabla(ds, tablas.length === 1 && i === 0)));
+}
+
+function pintar() {
+  document.documentElement.lang = idioma;
+  document.getElementById("titulo").textContent = t("titulo");
+  document.title = t("titulo");
+  for (const l of ["es", "en"]) document.getElementById(l).setAttribute("aria-pressed", String(l === idioma));
+  if (!modelo) return;
+  document.getElementById("grupos").replaceChildren(...modelo.dataset_groups.map((g) => {
+    const b = h("button", { "aria-pressed": String(g.id === grupoActual) }, txt(g.title),
+      h("small", {}, `${g.datasets.length} ${t("tablas").toLowerCase()}`));
+    b.onclick = () => { grupoActual = g.id; pintar(); };
+    return b;
+  }));
+  pintarGrupo();
+}
+
+for (const l of ["es", "en"]) document.getElementById(l).onclick = () => { idioma = l; pintar(); };
+
+async function cargar() {
+  document.getElementById("error").textContent = t("cargando");
+  try {
+    modelo = await (await fetch(BASE + "datamodel.json")).json();
+    // El estado (filas, fecha) es opcional: si falla, la vista funciona igual.
+    try { estado = (await (await fetch(BASE + "status.json")).json()).datasets || {}; } catch (_) {}
+    grupoActual = modelo.dataset_groups[0].id;
+    document.getElementById("error").textContent = "";
+    pintar();
+  } catch (e) {
+    document.getElementById("error").textContent = t("error") + e.message;
+  }
+}
+pintar();
+cargar();
+</script>
+</body>
+</html>
