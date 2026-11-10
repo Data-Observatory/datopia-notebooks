@@ -36,6 +36,8 @@
   code { font-size:13px; }
   a { color:var(--acento); }
   summary { cursor:pointer; }
+  #manual[hidden] { display:none; }
+  #manual { margin:10px 0; padding:10px 12px; border:1px solid var(--borde); border-radius:8px; background:var(--tarjeta); }
 </style>
 </head>
 <body>
@@ -45,6 +47,7 @@
 </header>
 <main>
   <div id="error" class="suave"></div>
+  <div id="manual" hidden><span id="ayuda"></span> <a id="descarga" target="_blank" rel="noopener"></a> · <label><span id="etiquetaCargar"></span> <input type="file" id="archivo" accept=".json,application/json"></label></div>
   <div class="grupos" id="grupos"></div>
   <div id="detalle"></div>
 </main>
@@ -54,14 +57,14 @@
 const BASE = "https://datopia.dataobservatory.net/_meta/";
 
 const TEXTOS = {
-  es: { titulo: "Catálogo Datopia", cargando: "Cargando…", error: "No se pudo cargar el catálogo: ",
+  es: { titulo: "Catálogo Datopia", cargando: "Cargando…", error: "No se pudo cargar el catálogo: ", ayuda: "Puede ser un bloqueo CORS del navegador o de la red. Descarga el archivo y cárgalo aquí:", descargar: "Descargar datamodel.json", cargar: "Cargar archivo",
         tablas: "Tablas", ejemplos: "Ejemplos de uso", diccionario: "Diccionario de datos",
         columna: "Columna", tipo: "Tipo", rol: "Rol", etiqueta: "Etiqueta", descripcion: "Descripción",
         unidad: "Unidad", codigos: "Códigos", grano: "Una fila por", entidad: "Entidad", particiones: "Particiones",
         anios: "Años", filas: "Filas", actualizado: "Actualizado", fuente: "Fuente", licencia: "Licencia",
         ruta: "Ruta S3", notebook: "Notebook", clave: "Clave primaria", relaciones: "Relaciones", ninguna: "—",
         sinCols: "Sin columnas documentadas" },
-  en: { titulo: "Datopia catalog", cargando: "Loading…", error: "Could not load the catalog: ",
+  en: { titulo: "Datopia catalog", cargando: "Loading…", error: "Could not load the catalog: ", ayuda: "It may be a CORS block by the browser or the network. Download the file and load it here:", descargar: "Download datamodel.json", cargar: "Load file",
         tablas: "Tables", ejemplos: "Usage examples", diccionario: "Data dictionary",
         columna: "Column", tipo: "Type", rol: "Role", etiqueta: "Label", descripcion: "Description",
         unidad: "Unit", codigos: "Codes", grano: "One row per", entidad: "Entity", particiones: "Partitions",
@@ -144,6 +147,9 @@ function pintar() {
   document.documentElement.lang = idioma;
   document.getElementById("titulo").textContent = t("titulo");
   document.title = t("titulo");
+  document.getElementById("ayuda").textContent = t("ayuda");
+  document.getElementById("descarga").textContent = t("descargar");
+  document.getElementById("etiquetaCargar").textContent = t("cargar");
   for (const l of ["es", "en"]) document.getElementById(l).setAttribute("aria-pressed", String(l === idioma));
   if (!modelo) return;
   document.getElementById("grupos").replaceChildren(...modelo.dataset_groups.map((g) => {
@@ -157,19 +163,37 @@ function pintar() {
 
 for (const l of ["es", "en"]) document.getElementById(l).onclick = () => { idioma = l; pintar(); };
 
+function iniciar(datos, estados) {
+  modelo = datos; estado = estados || {};
+  grupoActual = modelo.dataset_groups[0].id;
+  document.getElementById("error").textContent = "";
+  document.getElementById("manual").hidden = true;
+  pintar();
+}
+
 async function cargar() {
   document.getElementById("error").textContent = t("cargando");
+  document.getElementById("descarga").href = BASE + "datamodel.json";
   try {
-    modelo = await (await fetch(BASE + "datamodel.json")).json();
+    // cache: "reload" evita una copia vieja guardada por el navegador sin el encabezado CORS.
+    const pedir = async (archivo) => (await fetch(BASE + archivo, { mode: "cors", cache: "reload" })).json();
+    const datos = await pedir("datamodel.json");
     // El estado (filas, fecha) es opcional: si falla, la vista funciona igual.
-    try { estado = (await (await fetch(BASE + "status.json")).json()).datasets || {}; } catch (_) {}
-    grupoActual = modelo.dataset_groups[0].id;
-    document.getElementById("error").textContent = "";
-    pintar();
+    let estados = {};
+    try { estados = (await pedir("status.json")).datasets; } catch (_) {}
+    iniciar(datos, estados);
   } catch (e) {
-    document.getElementById("error").textContent = t("error") + e.message;
+    document.getElementById("error").textContent = t("error") + e.message + " (" + location.origin + ")";
+    document.getElementById("manual").hidden = false;
   }
 }
+
+// Alternativa sin red: leer un datamodel.json descargado (no pasa por CORS).
+document.getElementById("archivo").onchange = async (ev) => {
+  try { iniciar(JSON.parse(await ev.target.files[0].text())); }
+  catch (e) { document.getElementById("error").textContent = t("error") + e.message; }
+};
+
 pintar();
 cargar();
 </script>
