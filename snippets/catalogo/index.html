@@ -137,7 +137,7 @@ function pintarGrupo() {
     h("div", {}, claves.map((k) => h("span", { class: "chip" }, k))),
     ejemplos.length ? h("p", { class: "suave" }, `${t("ejemplos")}: ${ejemplos.join(" · ")}`) : "",
     h("h3", {}, `${t("tablas")} (${tablas.length})`),
-    tablas.map((ds, i) => tarjetaTabla(ds, tablas.length === 1 && i === 0)));
+    ...tablas.map((ds, i) => tarjetaTabla(ds, tablas.length === 1 && i === 0)));
 }
 
 function pintar() {
