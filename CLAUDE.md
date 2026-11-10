@@ -50,6 +50,15 @@ Cada dataset vive en `notebooks/<categoria>/<fuente>/`. Al agregar un nuevo data
 6. Opcional, si el texto de `coverage` usa cifras reales: agregar una función en
    `scripts/compute_stats.py` y correr `python scripts/compute_stats.py <fuente>`.
 
+### Enlaces antiguos (notebooks que se movieron)
+
+GitHub no redirige archivos movidos. Los notebooks vivían en `<categoria>/<fuente>/` y ahora están en
+`notebooks/<categoria>/<fuente>/` (la categoría no cambia: carpeta, S3 y OCDE usan el mismo nombre).
+En las rutas antiguas queda un `demo.ipynb` mínimo que dice dónde está el nuevo y trae
+su badge de Colab. `scripts/check_moved.py` (CI) verifica que cada uno apunte a un notebook que existe.
+Esos stubs son temporales: eliminarlos cuando ya no se usen los enlaces antiguos (a lo menos 6 meses).
+**No** crear carpetas nuevas fuera de `notebooks/`, y **no** mover un notebook sin dejar su stub.
+
 ### Índice y cifras generadas
 
 - `index.json` (raíz) lo lee el sitio web. **Nunca editarlo a mano**: sale de `meta.json` +

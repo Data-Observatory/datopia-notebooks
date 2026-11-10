@@ -15,3 +15,5 @@ jobs:
           python-version: "3.12"
       - name: Verificar que index.json está al día
         run: python scripts/build_index.py --check
+      - name: Verificar que los enlaces antiguos apuntan a notebooks que existen
+        run: python scripts/check_moved.py
