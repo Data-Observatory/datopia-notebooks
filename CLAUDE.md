@@ -23,6 +23,7 @@ do-datopia-notebooks/
 ├── README.md
 ├── config.example.json
 ├── index.json                  ← catálogo para el sitio (generado)
+├── snippets.es.json / snippets.en.json   ← snippets para el sitio (generados)
 ├── notebooks/
 │   ├── transporte/
 │   │   └── red-movilidad/
@@ -59,6 +60,12 @@ En las rutas antiguas queda un `demo.ipynb` mínimo que dice dónde está el nue
 su badge de Colab. `scripts/check_moved.py` (CI) verifica que cada uno apunte a un notebook que existe.
 Esos stubs son temporales: eliminarlos cuando ya no se usen los enlaces antiguos (a lo menos 6 meses).
 **No** crear carpetas nuevas fuera de `notebooks/`, y **no** mover un notebook sin dejar su stub.
+
+### Snippets de conexión
+
+`snippets/` tiene el código (un archivo por herramienta y escenario). `snippets.es.json` y
+`snippets.en.json` los consume el sitio y salen de `python scripts/build_snippets.py` (CI corre
+`--check`). Nunca editar esos JSON a mano; ver `snippets/README.md`.
 
 ### Índice y cifras generadas
 

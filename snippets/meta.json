@@ -1,0 +1,166 @@
+{
+  "scenarios": [
+    {
+      "id": "conexion-credenciales-pagina",
+      "dir": "conexion/credenciales-pagina",
+      "es": {
+        "title": "Conexión con credenciales de la página",
+        "description": "Pega key, secret y token copiados desde la página (duran 1 h) y cuenta filas de sinca / medicion-diaria."
+      },
+      "en": {
+        "title": "Connect with credentials from the web page",
+        "description": "Paste the key, secret and token copied from the web page (valid for 1 h) and count rows of sinca / medicion-diaria."
+      }
+    },
+    {
+      "id": "conexion-login-api",
+      "dir": "conexion/login-api",
+      "es": {
+        "title": "Conexión con login por API",
+        "description": "Obtén las credenciales temporales por código (email y contraseña) y cuenta filas de sinca / medicion-diaria."
+      },
+      "en": {
+        "title": "Connect with API login",
+        "description": "Get the temporary credentials in code (email and password) and count rows of sinca / medicion-diaria."
+      }
+    },
+    {
+      "id": "particiones",
+      "dir": "particiones",
+      "es": {
+        "title": "Datasets particionados",
+        "description": "Lee solo las carpetas year=YYYY/ necesarias. Ejemplo: salud / deis-rem. Credenciales pegadas desde la página."
+      },
+      "en": {
+        "title": "Partitioned datasets",
+        "description": "Read only the year=YYYY/ folders you need. Example: salud / deis-rem. Credentials pasted from the web page."
+      }
+    },
+    {
+      "id": "geoespacial",
+      "dir": "geoespacial",
+      "es": {
+        "title": "Datos geoespaciales (GeoParquet)",
+        "description": "Filtra por tiempo y caja geográfica en DuckDB y pasa el resultado a geopandas o sf. Ejemplo: transporte / red-movilidad."
+      },
+      "en": {
+        "title": "Geospatial data (GeoParquet)",
+        "description": "Filter by time and bounding box in DuckDB and hand the result to geopandas or sf. Example: transporte / red-movilidad."
+      }
+    }
+  ],
+  "languages": [
+    {
+      "id": "python",
+      "name": "Python",
+      "highlight": "python",
+      "libraries": [
+        {
+          "id": "duckdb",
+          "name": "DuckDB",
+          "file": "python-duckdb.py",
+          "lazy": true,
+          "lazy_note": {"es": "read_parquet devuelve una relación lazy", "en": "read_parquet returns a lazy relation"}
+        },
+        {
+          "id": "polars",
+          "name": "Polars",
+          "file": "python-polars.py",
+          "lazy": true,
+          "lazy_note": {"es": "scan_parquet devuelve un LazyFrame", "en": "scan_parquet returns a LazyFrame"}
+        },
+        {
+          "id": "pyarrow",
+          "name": "PyArrow",
+          "file": "python-pyarrow.py",
+          "lazy": true,
+          "lazy_note": {"es": "dataset solo descubre archivos", "en": "dataset only discovers files"}
+        },
+        {
+          "id": "pandas",
+          "name": "pandas",
+          "file": "python-pandas.py",
+          "lazy": false,
+          "lazy_note": {"es": "no es lazy: columns y filters acotan la descarga", "en": "not lazy: columns and filters limit the download"}
+        },
+        {
+          "id": "duckdb-geopandas",
+          "name": "DuckDB + geopandas",
+          "file": "python-duckdb-geopandas.py",
+          "lazy": true,
+          "lazy_note": {"es": "DuckDB filtra y solo el resultado pasa a geopandas", "en": "DuckDB filters and only the result goes to geopandas"}
+        }
+      ]
+    },
+    {
+      "id": "r",
+      "name": "R",
+      "highlight": "r",
+      "libraries": [
+        {
+          "id": "duckdb",
+          "name": "DuckDB + dplyr",
+          "file": "r-duckdb.R",
+          "lazy": true,
+          "lazy_note": {"es": "tbl() se traduce a SQL", "en": "tbl() is translated to SQL"}
+        },
+        {
+          "id": "arrow",
+          "name": "Arrow + dplyr",
+          "file": "r-arrow.R",
+          "lazy": true,
+          "lazy_note": {"es": "open_dataset solo descubre archivos", "en": "open_dataset only discovers files"}
+        },
+        {
+          "id": "duckdb-sf",
+          "name": "DuckDB + sf",
+          "file": "r-duckdb-sf.R",
+          "lazy": true,
+          "lazy_note": {"es": "DuckDB filtra y solo el resultado pasa a sf", "en": "DuckDB filters and only the result goes to sf"}
+        }
+      ]
+    },
+    {
+      "id": "julia",
+      "name": "Julia",
+      "highlight": "julia",
+      "libraries": [
+        {
+          "id": "duckdb",
+          "name": "DuckDB.jl",
+          "file": "julia-duckdb.jl",
+          "lazy": true,
+          "lazy_note": {"es": "SQL con pushdown de filtros", "en": "SQL with filter pushdown"}
+        }
+      ]
+    },
+    {
+      "id": "nodejs",
+      "name": "Node.js",
+      "highlight": "javascript",
+      "libraries": [
+        {
+          "id": "duckdb",
+          "name": "@duckdb/node-api",
+          "file": "nodejs-duckdb.mjs",
+          "lazy": true,
+          "lazy_note": {"es": "SQL con pushdown de filtros", "en": "SQL with filter pushdown"}
+        }
+      ]
+    },
+    {
+      "id": "shell",
+      "name": "Terminal",
+      "highlight": "bash",
+      "libraries": [
+        {
+          "id": "duckdb-cli",
+          "name": "DuckDB CLI",
+          "file": "duckdb-cli.sh",
+          "lazy": true,
+          "lazy_note": {"es": "SQL con pushdown de filtros", "en": "SQL with filter pushdown"}
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "_instrucciones": "Los snippets se escriben en español. snippets.en.json se genera aplicando estas sustituciones: primero 'frases' (texto exacto, de la más larga a la más corta), luego 'palabras' (identificadores, palabra completa).",
+  "frases": [
+    ["pegar desde la página (duran 1 h)", "paste from the web page (valid for 1 h)"],
+    ["Requiere el CLI de DuckDB, curl y jq", "Requires the DuckDB CLI, curl and jq"],
+    ["Requiere el CLI de DuckDB", "Requires the DuckDB CLI"],
+    ["DuckDB.jl 1.4: la versión de desarrollo no trae httpfs (s3://)", "DuckDB.jl 1.4: the development version ships without httpfs (s3://)"],
+    ["lazy: solo descubre archivos; omite dataset.json y manifest.json", "lazy: only discovers files; skips dataset.json and manifest.json"],
+    ["lazy: solo descubre archivos", "lazy: only discovers files"],
+    ["lazy: solo arma el plan", "lazy: only builds the plan"],
+    ["lazy: se traduce a SQL", "lazy: translated to SQL"],
+    ["lazy: aún no lee datos", "lazy: no data read yet"],
+    ["omite dataset.json y manifest.json", "skips dataset.json and manifest.json"],
+    ["pandas NO es lazy: carga lo que pides. `columns` y `filters` acotan la descarga.", "pandas is NOT lazy: it loads what you ask for. `columns` and `filters` limit the download."],
+    ["hive_partitioning expone `year` (carpetas year=YYYY/) y solo lee las carpetas que pasan el filtro", "hive_partitioning exposes `year` (year=YYYY/ folders) and only reads the folders that pass the filter"],
+    ["`year` debe declararse int64 (como en los archivos); con partitioning=\"hive\" falla: \"incompatible types\"", "`year` must be declared int64 (as in the files); with partitioning=\"hive\" it fails: \"incompatible types\""],
+    ["`year` debe declararse int64 (como en los archivos) o Arrow falla al unir los tipos", "`year` must be declared int64 (as in the files) or Arrow fails to merge the types"],
+    ["solo lee la carpeta year=2024/", "only reads the year=2024/ folder"],
+    ["`geometry` es GeoParquet (WKB, EPSG:4326)", "`geometry` is GeoParquet (WKB, EPSG:4326)"],
+    ["Filtrar en DuckDB (una hora + una caja) y traer a geopandas solo el resultado: un día son ~10 M de puntos", "Filter in DuckDB (one hour + one box) and bring only the result into geopandas: one day is ~10 M points"],
+    ["Filtrar en DuckDB (una hora + una caja) y traer a sf solo el resultado: un día son ~10 M de puntos", "Filter in DuckDB (one hour + one box) and bring only the result into sf: one day is ~10 M points"],
+    ["centro de Santiago", "downtown Santiago"],
+    ["tu-email@ejemplo.com", "your-email@example.com"],
+    ["tu-contraseña", "your-password"]
+  ],
+  "palabras": {
+    "mediciones": "measurements",
+    "sesion": "session",
+    "resultado": "result",
+    "opciones": "options",
+    "filas": "rows"
+  }
+}

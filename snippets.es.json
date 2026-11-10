@@ -1,0 +1,251 @@
+{
+  "version": 1,
+  "lang": "es",
+  "scenarios": [
+    {
+      "id": "conexion-credenciales-pagina",
+      "title": "Conexión con credenciales de la página",
+      "description": "Pega key, secret y token copiados desde la página (duran 1 h) y cuenta filas de sinca / medicion-diaria."
+    },
+    {
+      "id": "conexion-login-api",
+      "title": "Conexión con login por API",
+      "description": "Obtén las credenciales temporales por código (email y contraseña) y cuenta filas de sinca / medicion-diaria."
+    },
+    {
+      "id": "particiones",
+      "title": "Datasets particionados",
+      "description": "Lee solo las carpetas year=YYYY/ necesarias. Ejemplo: salud / deis-rem. Credenciales pegadas desde la página."
+    },
+    {
+      "id": "geoespacial",
+      "title": "Datos geoespaciales (GeoParquet)",
+      "description": "Filtra por tiempo y caja geográfica en DuckDB y pasa el resultado a geopandas o sf. Ejemplo: transporte / red-movilidad."
+    }
+  ],
+  "languages": [
+    {
+      "id": "python",
+      "name": "Python",
+      "highlight": "python",
+      "libraries": [
+        {
+          "id": "duckdb",
+          "name": "DuckDB",
+          "lazy": true,
+          "lazy_note": "read_parquet devuelve una relación lazy",
+          "snippets": {
+            "conexion-credenciales-pagina": {
+              "filename": "python-duckdb.py",
+              "code": "# pip install duckdb\n\nimport duckdb\n\nkey, secret, token = \"ASIA...\", \"...\", \"...\"   # pegar desde la página (duran 1 h)\n\nduckdb.sql(f\"CREATE SECRET (TYPE S3, KEY_ID '{key}', SECRET '{secret}', SESSION_TOKEN '{token}', REGION 'us-west-2')\")\n\nmediciones = duckdb.read_parquet(\"s3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1/part-*.parquet\")   # lazy: aún no lee datos\nmediciones.filter(\"year >= 2020\").aggregate(\"count(*) AS mediciones\").show()"
+            },
+            "conexion-login-api": {
+              "filename": "python-duckdb.py",
+              "code": "# pip install duckdb\n\nimport duckdb\nimport requests\n\nurl = \"https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod\"\nsesion = requests.post(f\"{url}/auth/login\", json={\"email\": \"tu-email@ejemplo.com\", \"password\": \"tu-contraseña\"}).json()\ncred = requests.post(f\"{url}/auth/session/s3\", headers={\"Authorization\": f\"Bearer {sesion['id_token']}\"}).json()\nkey, secret, token = cred[\"access_key_id\"], cred[\"secret_access_key\"], cred[\"session_token\"]\n\nduckdb.sql(f\"CREATE SECRET (TYPE S3, KEY_ID '{key}', SECRET '{secret}', SESSION_TOKEN '{token}', REGION 'us-west-2')\")\n\nmediciones = duckdb.read_parquet(\"s3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1/part-*.parquet\")   # lazy: aún no lee datos\nmediciones.filter(\"year >= 2020\").aggregate(\"count(*) AS mediciones\").show()"
+            },
+            "particiones": {
+              "filename": "python-duckdb.py",
+              "code": "# pip install duckdb\n\nimport duckdb\n\nkey, secret, token = \"ASIA...\", \"...\", \"...\"   # pegar desde la página (duran 1 h)\n\nduckdb.sql(f\"CREATE SECRET (TYPE S3, KEY_ID '{key}', SECRET '{secret}', SESSION_TOKEN '{token}', REGION 'us-west-2')\")\n\n# hive_partitioning expone `year` (carpetas year=YYYY/) y solo lee las carpetas que pasan el filtro\nrem = duckdb.read_parquet(\"s3://do-datopia/categoria=salud/pais=cl/fuente=deis/tipo=resumen-estadistico-mensual/version=v1/year=*/part-*.parquet\", hive_partitioning=True)\nrem.filter(\"year = 2024\").aggregate(\"count(*) AS filas\").show()   # solo lee la carpeta year=2024/"
+            }
+          }
+        },
+        {
+          "id": "polars",
+          "name": "Polars",
+          "lazy": true,
+          "lazy_note": "scan_parquet devuelve un LazyFrame",
+          "snippets": {
+            "conexion-credenciales-pagina": {
+              "filename": "python-polars.py",
+              "code": "# pip install polars\n\nimport polars as pl\n\nkey, secret, token = \"ASIA...\", \"...\", \"...\"   # pegar desde la página (duran 1 h)\n\nopciones = {\"aws_access_key_id\": key, \"aws_secret_access_key\": secret, \"aws_session_token\": token, \"aws_region\": \"us-west-2\"}\n\nmediciones = pl.scan_parquet(\"s3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1/part-*.parquet\", storage_options=opciones)   # lazy: solo arma el plan\nprint(mediciones.filter(pl.col(\"year\") >= 2020).select(pl.len()).collect())"
+            },
+            "conexion-login-api": {
+              "filename": "python-polars.py",
+              "code": "# pip install polars\n\nimport polars as pl\nimport requests\n\nurl = \"https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod\"\nsesion = requests.post(f\"{url}/auth/login\", json={\"email\": \"tu-email@ejemplo.com\", \"password\": \"tu-contraseña\"}).json()\ncred = requests.post(f\"{url}/auth/session/s3\", headers={\"Authorization\": f\"Bearer {sesion['id_token']}\"}).json()\nkey, secret, token = cred[\"access_key_id\"], cred[\"secret_access_key\"], cred[\"session_token\"]\n\nopciones = {\"aws_access_key_id\": key, \"aws_secret_access_key\": secret, \"aws_session_token\": token, \"aws_region\": \"us-west-2\"}\n\nmediciones = pl.scan_parquet(\"s3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1/part-*.parquet\", storage_options=opciones)   # lazy: solo arma el plan\nprint(mediciones.filter(pl.col(\"year\") >= 2020).select(pl.len()).collect())"
+            },
+            "particiones": {
+              "filename": "python-polars.py",
+              "code": "# pip install polars\n\nimport polars as pl\n\nkey, secret, token = \"ASIA...\", \"...\", \"...\"   # pegar desde la página (duran 1 h)\n\nopciones = {\"aws_access_key_id\": key, \"aws_secret_access_key\": secret, \"aws_session_token\": token, \"aws_region\": \"us-west-2\"}\n\n# hive_partitioning expone `year` (carpetas year=YYYY/) y solo lee las carpetas que pasan el filtro\nrem = pl.scan_parquet(\"s3://do-datopia/categoria=salud/pais=cl/fuente=deis/tipo=resumen-estadistico-mensual/version=v1/year=*/part-*.parquet\", hive_partitioning=True, storage_options=opciones)\nprint(rem.filter(pl.col(\"year\") == 2024).select(pl.len()).collect())   # solo lee la carpeta year=2024/"
+            }
+          }
+        },
+        {
+          "id": "pyarrow",
+          "name": "PyArrow",
+          "lazy": true,
+          "lazy_note": "dataset solo descubre archivos",
+          "snippets": {
+            "conexion-credenciales-pagina": {
+              "filename": "python-pyarrow.py",
+              "code": "# pip install pyarrow\n\nimport pyarrow.dataset as ds\nfrom pyarrow import fs\n\nkey, secret, token = \"ASIA...\", \"...\", \"...\"   # pegar desde la página (duran 1 h)\n\ns3 = fs.S3FileSystem(access_key=key, secret_key=secret, session_token=token, region=\"us-west-2\")\n\nmediciones = ds.dataset(\"do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1\", filesystem=s3, format=\"parquet\",\n                        ignore_prefixes=[\"dataset\", \"manifest\"])   # lazy: solo descubre archivos; omite dataset.json y manifest.json\nprint(mediciones.count_rows(filter=ds.field(\"year\") >= 2020))"
+            },
+            "conexion-login-api": {
+              "filename": "python-pyarrow.py",
+              "code": "# pip install pyarrow\n\nimport pyarrow.dataset as ds\nfrom pyarrow import fs\nimport requests\n\nurl = \"https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod\"\nsesion = requests.post(f\"{url}/auth/login\", json={\"email\": \"tu-email@ejemplo.com\", \"password\": \"tu-contraseña\"}).json()\ncred = requests.post(f\"{url}/auth/session/s3\", headers={\"Authorization\": f\"Bearer {sesion['id_token']}\"}).json()\nkey, secret, token = cred[\"access_key_id\"], cred[\"secret_access_key\"], cred[\"session_token\"]\n\ns3 = fs.S3FileSystem(access_key=key, secret_key=secret, session_token=token, region=\"us-west-2\")\n\nmediciones = ds.dataset(\"do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1\", filesystem=s3, format=\"parquet\",\n                        ignore_prefixes=[\"dataset\", \"manifest\"])   # lazy: solo descubre archivos; omite dataset.json y manifest.json\nprint(mediciones.count_rows(filter=ds.field(\"year\") >= 2020))"
+            },
+            "particiones": {
+              "filename": "python-pyarrow.py",
+              "code": "# pip install pyarrow\n\nimport pyarrow as pa\nimport pyarrow.dataset as ds\nfrom pyarrow import fs\n\nkey, secret, token = \"ASIA...\", \"...\", \"...\"   # pegar desde la página (duran 1 h)\n\ns3 = fs.S3FileSystem(access_key=key, secret_key=secret, session_token=token, region=\"us-west-2\")\n\n# `year` debe declararse int64 (como en los archivos); con partitioning=\"hive\" falla: \"incompatible types\"\nrem = ds.dataset(\"do-datopia/categoria=salud/pais=cl/fuente=deis/tipo=resumen-estadistico-mensual/version=v1\", filesystem=s3, format=\"parquet\", ignore_prefixes=[\"dataset\", \"manifest\"],\n                 partitioning=ds.partitioning(pa.schema([(\"year\", pa.int64())]), flavor=\"hive\"))\nprint(rem.count_rows(filter=ds.field(\"year\") == 2024))   # solo lee la carpeta year=2024/"
+            }
+          }
+        },
+        {
+          "id": "pandas",
+          "name": "pandas",
+          "lazy": false,
+          "lazy_note": "no es lazy: columns y filters acotan la descarga",
+          "snippets": {
+            "conexion-credenciales-pagina": {
+              "filename": "python-pandas.py",
+              "code": "# pip install pandas pyarrow s3fs\n\nimport pandas as pd\n\nkey, secret, token = \"ASIA...\", \"...\", \"...\"   # pegar desde la página (duran 1 h)\n\n# pandas NO es lazy: carga lo que pides. `columns` y `filters` acotan la descarga.\nmediciones = pd.read_parquet(\"s3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1\", columns=[\"year\"], filters=[(\"year\", \">=\", 2024)],\n                             ignore_prefixes=[\"dataset\", \"manifest\"],   # omite dataset.json y manifest.json\n                             storage_options={\"key\": key, \"secret\": secret, \"token\": token,\n                                              \"client_kwargs\": {\"region_name\": \"us-west-2\"}})\nprint(len(mediciones))"
+            },
+            "conexion-login-api": {
+              "filename": "python-pandas.py",
+              "code": "# pip install pandas pyarrow s3fs\n\nimport pandas as pd\nimport requests\n\nurl = \"https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod\"\nsesion = requests.post(f\"{url}/auth/login\", json={\"email\": \"tu-email@ejemplo.com\", \"password\": \"tu-contraseña\"}).json()\ncred = requests.post(f\"{url}/auth/session/s3\", headers={\"Authorization\": f\"Bearer {sesion['id_token']}\"}).json()\nkey, secret, token = cred[\"access_key_id\"], cred[\"secret_access_key\"], cred[\"session_token\"]\n\n# pandas NO es lazy: carga lo que pides. `columns` y `filters` acotan la descarga.\nmediciones = pd.read_parquet(\"s3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1\", columns=[\"year\"], filters=[(\"year\", \">=\", 2024)],\n                             ignore_prefixes=[\"dataset\", \"manifest\"],   # omite dataset.json y manifest.json\n                             storage_options={\"key\": key, \"secret\": secret, \"token\": token,\n                                              \"client_kwargs\": {\"region_name\": \"us-west-2\"}})\nprint(len(mediciones))"
+            }
+          }
+        },
+        {
+          "id": "duckdb-geopandas",
+          "name": "DuckDB + geopandas",
+          "lazy": true,
+          "lazy_note": "DuckDB filtra y solo el resultado pasa a geopandas",
+          "snippets": {
+            "geoespacial": {
+              "filename": "python-duckdb-geopandas.py",
+              "code": "# pip install duckdb geopandas\n\nimport duckdb\nimport geopandas as gpd\n\nkey, secret, token = \"ASIA...\", \"...\", \"...\"   # pegar desde la página (duran 1 h)\n\nduckdb.sql(f\"CREATE SECRET (TYPE S3, KEY_ID '{key}', SECRET '{secret}', SESSION_TOKEN '{token}', REGION 'us-west-2')\")\nduckdb.execute(\"INSTALL spatial; LOAD spatial\")   # `geometry` es GeoParquet (WKB, EPSG:4326)\n\n# Filtrar en DuckDB (una hora + una caja) y traer a geopandas solo el resultado: un día son ~10 M de puntos\ndf = duckdb.sql(\"\"\"\n    SELECT plate, speed, ST_X(geometry) AS lon, ST_Y(geometry) AS lat\n    FROM 's3://do-datopia/categoria=transporte/pais=cl/fuente=red-movilidad/tipo=posicion-diaria/version=v1/year=2025/month=10/day=15/part-*.parquet'\n    WHERE timestamp_gps_utc BETWEEN '2025-10-15 12:00' AND '2025-10-15 13:00'\n      AND ST_Within(geometry, ST_MakeEnvelope(-70.67, -33.46, -70.63, -33.42))   -- centro de Santiago\n\"\"\").df()\ngdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat), crs=\"EPSG:4326\")\nprint(gdf.head())"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "r",
+      "name": "R",
+      "highlight": "r",
+      "libraries": [
+        {
+          "id": "duckdb",
+          "name": "DuckDB + dplyr",
+          "lazy": true,
+          "lazy_note": "tbl() se traduce a SQL",
+          "snippets": {
+            "conexion-credenciales-pagina": {
+              "filename": "r-duckdb.R",
+              "code": "# install.packages(c(\"duckdb\", \"DBI\", \"dplyr\", \"dbplyr\"))\n\nlibrary(DBI)\nlibrary(dplyr)\n\nkey <- \"ASIA...\"; secret <- \"...\"; token <- \"...\"   # pegar desde la página (duran 1 h)\n\ncon <- dbConnect(duckdb::duckdb())\ndbExecute(con, sprintf(\"CREATE SECRET (TYPE S3, KEY_ID '%s', SECRET '%s', SESSION_TOKEN '%s', REGION 'us-west-2')\", key, secret, token))\n\nmediciones <- tbl(con, sql(\"SELECT * FROM 's3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1/part-*.parquet'\"))   # lazy: se traduce a SQL\nmediciones |> filter(year >= 2020) |> count() |> collect()"
+            },
+            "conexion-login-api": {
+              "filename": "r-duckdb.R",
+              "code": "# install.packages(c(\"duckdb\", \"DBI\", \"dplyr\", \"dbplyr\"))\n\nlibrary(DBI)\nlibrary(dplyr)\nlibrary(httr2)\n\nurl <- \"https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod\"\nsesion <- request(paste0(url, \"/auth/login\")) |>\n  req_body_json(list(email = \"tu-email@ejemplo.com\", password = \"tu-contraseña\")) |>\n  req_perform() |> resp_body_json()\ncred <- request(paste0(url, \"/auth/session/s3\")) |> req_auth_bearer_token(sesion$id_token) |>\n  req_method(\"POST\") |> req_perform() |> resp_body_json()\nkey <- cred$access_key_id; secret <- cred$secret_access_key; token <- cred$session_token\n\ncon <- dbConnect(duckdb::duckdb())\ndbExecute(con, sprintf(\"CREATE SECRET (TYPE S3, KEY_ID '%s', SECRET '%s', SESSION_TOKEN '%s', REGION 'us-west-2')\", key, secret, token))\n\nmediciones <- tbl(con, sql(\"SELECT * FROM 's3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1/part-*.parquet'\"))   # lazy: se traduce a SQL\nmediciones |> filter(year >= 2020) |> count() |> collect()"
+            },
+            "particiones": {
+              "filename": "r-duckdb.R",
+              "code": "# install.packages(c(\"duckdb\", \"DBI\", \"dplyr\", \"dbplyr\"))\n\nlibrary(DBI)\nlibrary(dplyr)\n\nkey <- \"ASIA...\"; secret <- \"...\"; token <- \"...\"   # pegar desde la página (duran 1 h)\n\ncon <- dbConnect(duckdb::duckdb())\ndbExecute(con, sprintf(\"CREATE SECRET (TYPE S3, KEY_ID '%s', SECRET '%s', SESSION_TOKEN '%s', REGION 'us-west-2')\", key, secret, token))\n\n# hive_partitioning expone `year` (carpetas year=YYYY/) y solo lee las carpetas que pasan el filtro\nrem <- tbl(con, sql(\"SELECT * FROM read_parquet('s3://do-datopia/categoria=salud/pais=cl/fuente=deis/tipo=resumen-estadistico-mensual/version=v1/year=*/part-*.parquet', hive_partitioning = true)\"))\nrem |> filter(year == 2024) |> count() |> collect()   # solo lee la carpeta year=2024/"
+            }
+          }
+        },
+        {
+          "id": "arrow",
+          "name": "Arrow + dplyr",
+          "lazy": true,
+          "lazy_note": "open_dataset solo descubre archivos",
+          "snippets": {
+            "conexion-credenciales-pagina": {
+              "filename": "r-arrow.R",
+              "code": "# install.packages(c(\"arrow\", \"dplyr\"))\n\nlibrary(arrow)\nlibrary(dplyr)\n\nkey <- \"ASIA...\"; secret <- \"...\"; token <- \"...\"   # pegar desde la página (duran 1 h)\n\ns3 <- S3FileSystem$create(access_key = key, secret_key = secret, session_token = token, region = \"us-west-2\")\n\nmediciones <- open_dataset(s3$path(\"do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1\"),   # lazy: solo descubre archivos\n  factory_options = list(selector_ignore_prefixes = c(\"dataset\", \"manifest\")))   # omite dataset.json y manifest.json\nmediciones |> filter(year >= 2020) |> count() |> collect()"
+            },
+            "conexion-login-api": {
+              "filename": "r-arrow.R",
+              "code": "# install.packages(c(\"arrow\", \"dplyr\"))\n\nlibrary(arrow)\nlibrary(dplyr)\nlibrary(httr2)\n\nurl <- \"https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod\"\nsesion <- request(paste0(url, \"/auth/login\")) |>\n  req_body_json(list(email = \"tu-email@ejemplo.com\", password = \"tu-contraseña\")) |>\n  req_perform() |> resp_body_json()\ncred <- request(paste0(url, \"/auth/session/s3\")) |> req_auth_bearer_token(sesion$id_token) |>\n  req_method(\"POST\") |> req_perform() |> resp_body_json()\nkey <- cred$access_key_id; secret <- cred$secret_access_key; token <- cred$session_token\n\ns3 <- S3FileSystem$create(access_key = key, secret_key = secret, session_token = token, region = \"us-west-2\")\n\nmediciones <- open_dataset(s3$path(\"do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1\"),   # lazy: solo descubre archivos\n  factory_options = list(selector_ignore_prefixes = c(\"dataset\", \"manifest\")))   # omite dataset.json y manifest.json\nmediciones |> filter(year >= 2020) |> count() |> collect()"
+            },
+            "particiones": {
+              "filename": "r-arrow.R",
+              "code": "# install.packages(c(\"arrow\", \"dplyr\"))\n\nlibrary(arrow)\nlibrary(dplyr)\n\nkey <- \"ASIA...\"; secret <- \"...\"; token <- \"...\"   # pegar desde la página (duran 1 h)\n\ns3 <- S3FileSystem$create(access_key = key, secret_key = secret, session_token = token, region = \"us-west-2\")\n\n# `year` debe declararse int64 (como en los archivos) o Arrow falla al unir los tipos\nrem <- open_dataset(s3$path(\"do-datopia/categoria=salud/pais=cl/fuente=deis/tipo=resumen-estadistico-mensual/version=v1\"), partitioning = hive_partition(year = int64()),\n  factory_options = list(selector_ignore_prefixes = c(\"dataset\", \"manifest\")))   # omite dataset.json y manifest.json\nrem |> filter(year == 2024) |> count() |> collect()   # solo lee la carpeta year=2024/"
+            }
+          }
+        },
+        {
+          "id": "duckdb-sf",
+          "name": "DuckDB + sf",
+          "lazy": true,
+          "lazy_note": "DuckDB filtra y solo el resultado pasa a sf",
+          "snippets": {
+            "geoespacial": {
+              "filename": "r-duckdb-sf.R",
+              "code": "# install.packages(c(\"duckdb\", \"DBI\", \"sf\"))\n\nlibrary(DBI)\nlibrary(sf)\n\nkey <- \"ASIA...\"; secret <- \"...\"; token <- \"...\"   # pegar desde la página (duran 1 h)\n\ncon <- dbConnect(duckdb::duckdb())\ndbExecute(con, sprintf(\"CREATE SECRET (TYPE S3, KEY_ID '%s', SECRET '%s', SESSION_TOKEN '%s', REGION 'us-west-2')\", key, secret, token))\ndbExecute(con, \"INSTALL spatial\")\ndbExecute(con, \"LOAD spatial\")   # `geometry` es GeoParquet (WKB, EPSG:4326)\n\n# Filtrar en DuckDB (una hora + una caja) y traer a sf solo el resultado: un día son ~10 M de puntos\ndf <- dbGetQuery(con, \"\n    SELECT plate, speed, ST_X(geometry) AS lon, ST_Y(geometry) AS lat\n    FROM 's3://do-datopia/categoria=transporte/pais=cl/fuente=red-movilidad/tipo=posicion-diaria/version=v1/year=2025/month=10/day=15/part-*.parquet'\n    WHERE timestamp_gps_utc BETWEEN '2025-10-15 12:00' AND '2025-10-15 13:00'\n      AND ST_Within(geometry, ST_MakeEnvelope(-70.67, -33.46, -70.63, -33.42))   -- centro de Santiago\n\")\nst_as_sf(df, coords = c(\"lon\", \"lat\"), crs = 4326)"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "julia",
+      "name": "Julia",
+      "highlight": "julia",
+      "libraries": [
+        {
+          "id": "duckdb",
+          "name": "DuckDB.jl",
+          "lazy": true,
+          "lazy_note": "SQL con pushdown de filtros",
+          "snippets": {
+            "conexion-credenciales-pagina": {
+              "filename": "julia-duckdb.jl",
+              "code": "# using Pkg; Pkg.add([\"DataFrames\", \"DBInterface\", \"HTTP\", \"JSON3\"]); Pkg.add(name=\"DuckDB\", version=\"1.4\")  # DuckDB.jl 1.4: la versión de desarrollo no trae httpfs (s3://)\n\nusing DuckDB, DBInterface, DataFrames\n\nkey, secret, token = \"ASIA...\", \"...\", \"...\"   # pegar desde la página (duran 1 h)\n\ncon = DBInterface.connect(DuckDB.DB, \":memory:\")\nDBInterface.execute(con, \"CREATE SECRET (TYPE S3, KEY_ID '$key', SECRET '$secret', SESSION_TOKEN '$token', REGION 'us-west-2')\")\n\nresultado = DataFrame(DBInterface.execute(con, \"\"\"\n    SELECT count(*) AS mediciones FROM 's3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1/part-*.parquet' WHERE year >= 2020\"\"\"))\nprintln(resultado)"
+            },
+            "conexion-login-api": {
+              "filename": "julia-duckdb.jl",
+              "code": "# using Pkg; Pkg.add([\"DataFrames\", \"DBInterface\", \"HTTP\", \"JSON3\"]); Pkg.add(name=\"DuckDB\", version=\"1.4\")  # DuckDB.jl 1.4: la versión de desarrollo no trae httpfs (s3://)\n\nusing DuckDB, DBInterface, DataFrames\nusing HTTP, JSON3\n\nurl = \"https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod\"\nsesion = JSON3.read(HTTP.post(\"$url/auth/login\", [\"Content-Type\" => \"application/json\"],\n    JSON3.write(Dict(\"email\" => \"tu-email@ejemplo.com\", \"password\" => \"tu-contraseña\"))).body)\ncred = JSON3.read(HTTP.post(\"$url/auth/session/s3\", [\"Authorization\" => \"Bearer $(sesion.id_token)\"]).body)\nkey, secret, token = cred.access_key_id, cred.secret_access_key, cred.session_token\n\ncon = DBInterface.connect(DuckDB.DB, \":memory:\")\nDBInterface.execute(con, \"CREATE SECRET (TYPE S3, KEY_ID '$key', SECRET '$secret', SESSION_TOKEN '$token', REGION 'us-west-2')\")\n\nresultado = DataFrame(DBInterface.execute(con, \"\"\"\n    SELECT count(*) AS mediciones FROM 's3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1/part-*.parquet' WHERE year >= 2020\"\"\"))\nprintln(resultado)"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "nodejs",
+      "name": "Node.js",
+      "highlight": "javascript",
+      "libraries": [
+        {
+          "id": "duckdb",
+          "name": "@duckdb/node-api",
+          "lazy": true,
+          "lazy_note": "SQL con pushdown de filtros",
+          "snippets": {
+            "conexion-credenciales-pagina": {
+              "filename": "nodejs-duckdb.mjs",
+              "code": "// npm install @duckdb/node-api   (Node.js 18+)\n\nimport { DuckDBInstance } from \"@duckdb/node-api\";\n\nconst key = \"ASIA...\", secret = \"...\", token = \"...\";   // pegar desde la página (duran 1 h)\n\nconst con = await (await DuckDBInstance.create()).connect();\nawait con.run(`CREATE SECRET (TYPE S3, KEY_ID '${key}', SECRET '${secret}', SESSION_TOKEN '${token}', REGION 'us-west-2')`);\n\nconst resultado = await con.runAndReadAll(`SELECT count(*) AS mediciones FROM 's3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1/part-*.parquet' WHERE year >= 2020`);\nconsole.table(resultado.getRowObjectsJson());"
+            },
+            "conexion-login-api": {
+              "filename": "nodejs-duckdb.mjs",
+              "code": "// npm install @duckdb/node-api   (Node.js 18+)\n\nimport { DuckDBInstance } from \"@duckdb/node-api\";\n\nconst url = \"https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod\";\nconst sesion = await (await fetch(`${url}/auth/login`, { method: \"POST\", headers: { \"Content-Type\": \"application/json\" },\n  body: JSON.stringify({ email: \"tu-email@ejemplo.com\", password: \"tu-contraseña\" }) })).json();\nconst cred = await (await fetch(`${url}/auth/session/s3`, { method: \"POST\",\n  headers: { Authorization: `Bearer ${sesion.id_token}` } })).json();\nconst [key, secret, token] = [cred.access_key_id, cred.secret_access_key, cred.session_token];\n\nconst con = await (await DuckDBInstance.create()).connect();\nawait con.run(`CREATE SECRET (TYPE S3, KEY_ID '${key}', SECRET '${secret}', SESSION_TOKEN '${token}', REGION 'us-west-2')`);\n\nconst resultado = await con.runAndReadAll(`SELECT count(*) AS mediciones FROM 's3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1/part-*.parquet' WHERE year >= 2020`);\nconsole.table(resultado.getRowObjectsJson());"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "shell",
+      "name": "Terminal",
+      "highlight": "bash",
+      "libraries": [
+        {
+          "id": "duckdb-cli",
+          "name": "DuckDB CLI",
+          "lazy": true,
+          "lazy_note": "SQL con pushdown de filtros",
+          "snippets": {
+            "conexion-credenciales-pagina": {
+              "filename": "duckdb-cli.sh",
+              "code": "#!/usr/bin/env bash\n# Requiere el CLI de DuckDB\n\nKEY_ID=\"ASIA...\" SECRET=\"...\" SESSION_TOKEN=\"...\"   # pegar desde la página (duran 1 h)\n\nduckdb -c \"\nCREATE SECRET (TYPE S3, KEY_ID '$KEY_ID', SECRET '$SECRET', SESSION_TOKEN '$SESSION_TOKEN', REGION 'us-west-2');\nSELECT count(*) AS mediciones FROM 's3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1/part-*.parquet' WHERE year >= 2020;\""
+            },
+            "conexion-login-api": {
+              "filename": "duckdb-cli.sh",
+              "code": "#!/usr/bin/env bash\n# Requiere el CLI de DuckDB, curl y jq\n\nURL=\"https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod\"\nTOKEN=$(curl -s -X POST \"$URL/auth/login\" -H \"Content-Type: application/json\" \\\n  -d '{\"email\": \"tu-email@ejemplo.com\", \"password\": \"tu-contraseña\"}' | jq -r .id_token)\nCRED=$(curl -s -X POST \"$URL/auth/session/s3\" -H \"Authorization: Bearer $TOKEN\")\nKEY_ID=$(jq -r .access_key_id <<<\"$CRED\") SECRET=$(jq -r .secret_access_key <<<\"$CRED\") SESSION_TOKEN=$(jq -r .session_token <<<\"$CRED\")\n\nduckdb -c \"\nCREATE SECRET (TYPE S3, KEY_ID '$KEY_ID', SECRET '$SECRET', SESSION_TOKEN '$SESSION_TOKEN', REGION 'us-west-2');\nSELECT count(*) AS mediciones FROM 's3://do-datopia/categoria=medio-fisico/pais=cl/fuente=sinca/tipo=medicion-diaria/version=v1/part-*.parquet' WHERE year >= 2020;\""
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

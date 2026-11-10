@@ -10,3 +10,10 @@ Código mínimo para leer el Datopia Lakehouse. Para análisis, ver los notebook
 
 `particiones/` y `geoespacial/` usan credenciales pegadas desde la página; para login por código,
 reemplaza la primera línea por el bloque de `conexion/login-api/`.
+
+## JSON para el sitio
+
+`snippets.es.json` y `snippets.en.json` (raíz del repo) se generan desde esta carpeta; **no se editan
+a mano**: `python scripts/build_snippets.py`. Cada snippet se escribe en español; la versión en inglés
+aplica las sustituciones de `traducciones-en.json`. Lenguajes, librerías y escenarios se declaran en
+`meta.json`. Al agregar un snippet: crear el archivo, registrarlo en `meta.json`, generar y commitear.
