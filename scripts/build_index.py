@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+NOTEBOOKS_DIR = ROOT / "notebooks"
 INDEX_PATH = ROOT / "index.json"
 
 TOP_LEVEL_KEYS = {"format", "es", "en"}
@@ -24,10 +25,10 @@ OPTIONAL_TEXT_KEYS = ["coverage_fallback"]
 
 
 def dataset_dirs():
-    """Carpetas `<categoria>/<fuente>/` que tienen `meta.json` o `demo.ipynb`."""
+    """Carpetas `notebooks/<categoria>/<fuente>/` que tienen `meta.json` o `demo.ipynb`."""
     found = set()
     for pattern in ("*/*/meta.json", "*/*/demo.ipynb"):
-        for path in ROOT.glob(pattern):
+        for path in NOTEBOOKS_DIR.glob(pattern):
             relative = path.relative_to(ROOT)
             if any(part.startswith(".") for part in relative.parts):
                 continue

@@ -22,27 +22,27 @@ do-datopia-notebooks/
 ├── CLAUDE.md
 ├── README.md
 ├── config.example.json
-├── .gitignore
-├── transporte/
-│   └── red-movilidad/
-│       └── demo.ipynb          ← dataset activo
-├── medio-fisico/
-│   └── sinca/
-│       └── demo.ipynb
-├── salud/
-│   └── deis-rem/
-│       └── demo.ipynb
-├── sociologia/
-│   └── ine/
-│       └── demo.ipynb
-└── <categoria>/                ← nuevas categorías se agregan aquí
-    └── <fuente>/
-        └── demo.ipynb
+├── index.json                  ← catálogo para el sitio (generado)
+├── notebooks/
+│   ├── transporte/
+│   │   └── red-movilidad/
+│   │       └── demo.ipynb      ← dataset activo
+│   ├── medio-fisico/
+│   │   └── sinca/
+│   ├── salud/
+│   │   └── deis-rem/
+│   ├── sociologia/
+│   │   └── ine/
+│   └── <categoria>/            ← nuevas categorías se agregan aquí
+│       └── <fuente>/
+│           └── demo.ipynb
+├── scripts/
+└── docs/
 ```
 
-Cada dataset vive en `<categoria>/<fuente>/`. Al agregar un nuevo dataset:
-1. Crear la carpeta `<categoria>/<fuente>/`.
-2. Copiar la estructura de `transporte/red-movilidad/demo.ipynb` como plantilla.
+Cada dataset vive en `notebooks/<categoria>/<fuente>/`. Al agregar un nuevo dataset:
+1. Crear la carpeta `notebooks/<categoria>/<fuente>/`.
+2. Copiar la estructura de `notebooks/transporte/red-movilidad/demo.ipynb` como plantilla.
 3. Actualizar `README.md` raíz con el nuevo badge "Open in Colab".
 4. Registrar el dataset en la sección **Datasets disponibles** de este archivo.
 5. Crear `meta.json` junto al notebook (copiar uno existente) y correr
@@ -214,7 +214,7 @@ vienen en minúscula y sin tildes; las etiquetas cambian entre censos (`departam
   ```python
   IN_COLAB = "google.colab" in sys.modules or os.path.exists("/content")
   ```
-- **Config local:** leer `../../config.json` (copiado de `config.example.json`).
+- **Config local:** leer `../../../config.json` (copiado de `config.example.json`).
 - **Config Colab:** `input()` para URL y email, `getpass.getpass()` para contraseña.
 - **Nunca** comitear URLs reales, passwords ni tokens.
 - **Estilo profesional:** badges en la primera celda markdown (ver abajo).
@@ -228,8 +228,8 @@ vienen en minúscula y sin tildes; las etiquetas cambian entre censos (`departam
 Primera celda markdown del notebook:
 
 ```markdown
-[![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/<categoria>/<fuente>/demo.ipynb)
-[![Licencia](https://img.shields.io/badge/licencia-MIT-blue.svg)](../../LICENSE)
+[![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/<categoria>/<fuente>/demo.ipynb)
+[![Licencia](https://img.shields.io/badge/licencia-MIT-blue.svg)](../../../LICENSE)
 [![Dataset](https://img.shields.io/badge/dataset-<fuente>-green.svg)]()
 [![Actualización](https://img.shields.io/badge/actualización-diaria-brightgreen.svg)]()
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)]()

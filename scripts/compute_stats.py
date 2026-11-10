@@ -205,10 +205,10 @@ def stats_red_movilidad(con, bucket):
 
 # Carpeta del dataset (<categoria>/<fuente>) → función que calcula sus cifras
 DATASETS = {
-    "sinca": ("medio-fisico/sinca", stats_sinca),
-    "deis-rem": ("salud/deis-rem", stats_deis_rem),
-    "red-movilidad": ("transporte/red-movilidad", stats_red_movilidad),
-    "ine": ("sociologia/ine", stats_ine),
+    "sinca": ("notebooks/medio-fisico/sinca", stats_sinca),
+    "deis-rem": ("notebooks/salud/deis-rem", stats_deis_rem),
+    "red-movilidad": ("notebooks/transporte/red-movilidad", stats_red_movilidad),
+    "ine": ("notebooks/sociologia/ine", stats_ine),
 }
 
 

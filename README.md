@@ -18,10 +18,10 @@ sin infraestructura propia. Compatible con Google Colab y entornos locales.
 
 | Categoría | Fuente | Cobertura | Notebook |
 |---|---|---|---|
-| Transporte | RED Movilidad (RM) | Sep 2025 → hoy (diario; sin datos 2026-07-06 a 2026-08-28) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/transporte/red-movilidad/demo.ipynb) |
-| Medio físico | SINCA (calidad del aire) | 1971 → hoy (+200 estaciones) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/medio-fisico/sinca/demo.ipynb) |
-| Salud | DEIS — Resumen Estadístico Mensual (REM) | 2009 → hoy (mensual, red pública) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/salud/deis-rem/demo.ipynb) |
-| Sociología | INE — Censos de Población y Vivienda | Censos 2017 y 2024 (microdatos por vivienda, hogar y persona) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/sociologia/ine/demo.ipynb) |
+| Transporte | RED Movilidad (RM) | Sep 2025 → hoy (diario; sin datos 2026-07-06 a 2026-08-28) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/transporte/red-movilidad/demo.ipynb) |
+| Medio físico | SINCA (calidad del aire) | 1971 → hoy (+200 estaciones) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/medio-fisico/sinca/demo.ipynb) |
+| Salud | DEIS — Resumen Estadístico Mensual (REM) | 2009 → hoy (mensual, red pública) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/salud/deis-rem/demo.ipynb) |
+| Sociología | INE — Censos de Población y Vivienda | Censos 2017 y 2024 (microdatos por vivienda, hogar y persona) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/sociologia/ine/demo.ipynb) |
 
 El catálogo de notebooks está disponible en formato JSON (ES/EN) en
 [`index.json`](index.json), también en

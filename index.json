@@ -1,7 +1,7 @@
 [
   {
     "id": "deis-rem",
-    "path": "salud/deis-rem/demo.ipynb",
+    "path": "notebooks/salud/deis-rem/demo.ipynb",
     "format": "Parquet",
     "es": {
       "name": "DEIS REM",
@@ -20,7 +20,7 @@
   },
   {
     "id": "ine",
-    "path": "sociologia/ine/demo.ipynb",
+    "path": "notebooks/sociologia/ine/demo.ipynb",
     "format": "Parquet",
     "es": {
       "name": "INE Censos",
@@ -39,7 +39,7 @@
   },
   {
     "id": "red-movilidad",
-    "path": "transporte/red-movilidad/demo.ipynb",
+    "path": "notebooks/transporte/red-movilidad/demo.ipynb",
     "format": "GeoParquet",
     "es": {
       "name": "RED Movilidad",
@@ -58,7 +58,7 @@
   },
   {
     "id": "sinca",
-    "path": "medio-fisico/sinca/demo.ipynb",
+    "path": "notebooks/medio-fisico/sinca/demo.ipynb",
     "format": "Parquet",
     "es": {
       "name": "SINCA",
