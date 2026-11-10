@@ -36,6 +36,7 @@ do-datopia-notebooks/
 │   └── <categoria>/            ← nuevas categorías se agregan aquí
 │       └── <fuente>/
 │           └── demo.ipynb
+├── snippets/                   ← fuente de los snippets (un archivo por herramienta)
 ├── scripts/
 └── docs/
 ```
