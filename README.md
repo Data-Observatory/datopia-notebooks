@@ -2,7 +2,7 @@
 
 [![Licencia](https://img.shields.io/badge/licencia-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)]()
-[![Datasets](https://img.shields.io/badge/datasets-4-green.svg)]()
+[![Datasets](https://img.shields.io/badge/datasets-5-green.svg)]()
 [![Actualización](https://img.shields.io/badge/actualización-diaria-brightgreen.svg)]()
 [![Región](https://img.shields.io/badge/AWS-us--west--2-orange.svg)]()
 
@@ -22,6 +22,7 @@ sin infraestructura propia. Compatible con Google Colab y entornos locales.
 | Medio físico | SINCA (calidad del aire) | 1971 → hoy (+200 estaciones) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/medio-fisico/sinca/demo.ipynb) |
 | Salud | DEIS — Resumen Estadístico Mensual (REM) | 2009 → hoy (mensual, red pública) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/salud/deis-rem/demo.ipynb) |
 | Sociología | INE — Censos de Población y Vivienda | Censos 2017 y 2024 (microdatos por vivienda, hogar y persona) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/sociologia/ine/demo.ipynb) |
+| Geografía social | SUBDERE — División Político Administrativa (límites comunales) | Fotos de 2000-05-08 a 2018-09-06 (346 comunas, 16 regiones) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/geografia-social/subdere/demo.ipynb) |
 
 El catálogo de notebooks está disponible en formato JSON (ES/EN) en
 [`index.json`](index.json), también en

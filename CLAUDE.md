@@ -34,6 +34,8 @@ do-datopia-notebooks/
 │   │   └── deis-rem/
 │   ├── sociologia/
 │   │   └── ine/
+│   ├── geografia-social/
+│   │   └── subdere/
 │   └── <categoria>/            ← nuevas categorías se agregan aquí
 │       └── <fuente>/
 │           └── demo.ipynb
@@ -220,6 +222,31 @@ vienen en minúscula y sin tildes; las etiquetas cambian entre censos (`departam
 `departamento` 2024); el largo de 2024 omite respuestas vacías pero el de 2017 trae filas con `respuesta` nula
 (filtrar `respuesta IS NOT NULL` al comparar años); el diccionario da 10 preguntas de vivienda, 2 de hogar y 15 de persona con el mismo texto en ambos censos
 (el largo de 2017 trae datos de 8 de las 10 de vivienda); misma pregunta ≠ mismas etiquetas de respuesta; **no recorrer `personas` largo completo** (>1 300 M filas).
+
+### geografia-social / subdere
+
+**Ruta S3 (base):** `s3://do-datopia/categoria=geografia-social/pais=cl/fuente=subdere/` — dos tablas:
+
+| `tipo=` / `version=` | Contenido | Escala |
+|---|---|---|
+| `division-territorial/version=v2` | Comunas con polígono (GeoParquet **2.0**), códigos CUT y nombres oficiales | 342–346 filas por foto, ~90 MB por foto |
+| `division-territorial-cambios/version=v1` | Un registro por unidad cambiada por cada ley/decreto, con `norma_url` | ~900 filas |
+
+**Particiones (solo `division-territorial`):** `snapshot_date=YYYY-MM-DD/part-<run_id>-00000.parquet`. Base
+`2018-09-06`; fotos reconstruidas `2000-05-08` … `2010-03-11`. Leer las rutas de `manifest.json` (`parts[].file`),
+o glob `snapshot_date=*/part-*.parquet` (no el prefijo completo).
+**Columnas:** `cut_reg`, `cut_prov`, `cut_com` (texto con ceros), `nom_reg`, `abr_reg`, `nom_prov`, `nom_com`,
+`superficie` (km² oficial), `geometry`, `bbox_*`, `area_m2`, `perimeter_m`.
+**Cobertura:** estático (sin actualización periódica).
+
+Trampas:
+- GeoParquet 2.0: requiere DuckDB ≥1.4 con `spatial` (con <1.4 falla); Polars no lo abre.
+- La geometría es pesada: no traerla entera a pandas; `ST_Simplify(geometry, 0.003)` en DuckDB para mapas
+  (`ST_SimplifyPreserveTopology` es ~30 veces más lento).
+- Al crear una región sus comunas cambian de código: comparar fotos con el puente de `traslado` de la tabla de cambios.
+- La tabla de cambios escribe los nombres como la ley (con erratas); los nombres oficiales salen de las fotos.
+- Antártica Chilena (`12202`) sin geometría ni superficie.
+- `ST_Transform(geometry, 'EPSG:4326', 'EPSG:32719', always_xy := true)` (sin `always_xy` los ejes se invierten).
 
 ---
 

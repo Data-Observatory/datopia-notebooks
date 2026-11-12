@@ -1,0 +1,17 @@
+{
+  "format": "GeoParquet",
+  "es": {
+    "name": "SUBDERE División Político Administrativa",
+    "category": "Geografía social",
+    "source": "SUBDERE — División Político Administrativa (DPA)",
+    "coverage": "Fotos de la DPA desde 2000-05-08 hasta la base 2018-09-06 (346 comunas, 16 regiones)",
+    "description": "Polígonos comunales de Chile con códigos CUT y nombres oficiales de región, provincia y comuna, fotos históricas reconstruidas desde las leyes y tabla de cambios."
+  },
+  "en": {
+    "name": "SUBDERE Political-Administrative Division",
+    "category": "Social geography",
+    "source": "SUBDERE — Political-Administrative Division (DPA)",
+    "coverage": "DPA snapshots from 2000-05-08 to the 2018-09-06 base (346 communes, 16 regions)",
+    "description": "Chilean commune polygons with CUT codes and official region, province and commune names, historical snapshots rebuilt from the laws, and a change table."
+  }
+}
