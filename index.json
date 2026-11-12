@@ -46,14 +46,14 @@
       "category": "Transporte",
       "source": "RED Movilidad (RM)",
       "coverage": "2025-09-09 → hoy (diario; sin datos 2026-07-07 a 2026-08-27)",
-      "description": "Posiciones GPS de la flota de buses de RED Movilidad, con actualización diaria y geometría de puntos."
+      "description": "Posiciones GPS de la flota de buses de RED Movilidad, con actualización diaria y geometría de puntos. Incluye además los horarios y recorridos (feeds GTFS del DTPM desde 2014) en un segundo notebook."
     },
     "en": {
       "name": "RED Movilidad",
       "category": "Transport",
       "source": "RED Movilidad (RM)",
       "coverage": "2025-09-09 → today (daily; no data 2026-07-07 to 2026-08-27)",
-      "description": "GPS positions of the RED Movilidad bus fleet, updated daily, with point geometry."
+      "description": "GPS positions of the RED Movilidad bus fleet, updated daily, with point geometry. Also covers schedules and routes (DTPM GTFS feeds since 2014) in a second notebook."
     }
   },
   {

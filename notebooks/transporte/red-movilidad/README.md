@@ -8,7 +8,7 @@ Dataset de posiciones GPS del sistema de transporte público RED Movilidad (Regi
 
 **Particionado por día UTC.** Los archivos están organizados en `year=/month=/day=` según día UTC, no local. Un día UTC comienza a las 20:00–21:00 hora chilena del día anterior, por lo que al filtrar por fecha local es necesario cargar el día UTC siguiente y aplicar el filtro en la consulta.
 
-**Formato GeoParquet.** La columna `geometry` contiene puntos WKB en EPSG:4326 (WGS 84). Las consultas espaciales requieren la extensión `spatial` de DuckDB.
+**Formato GeoParquet.** La columna `geometry` contiene puntos WKB en EPSG:4326 (WGS 84). Los archivos declaran GeoParquet 1.0.0 en su metadato `geo` (verificado el 2026-11-12 en los 377 archivos diarios); los datasets nuevos del Lakehouse usan 1.1. Las consultas espaciales requieren la extensión `spatial` de DuckDB.
 
 **Fuente de origen.** Los datos provienen directamente de la API `/posiciones` del DTPM y se consolidan diariamente en el Datopia Lakehouse. No se aplican correcciones ni imputaciones sobre los valores originales.
 
@@ -47,3 +47,4 @@ con.execute("""
 | Archivo | Descripción |
 |---------|-------------|
 | `demo.ipynb` | Notebook de demostración: autenticación, exploración, consultas y visualizaciones |
+| `gtfs.ipynb` | Horarios y recorridos del transporte público (feeds GTFS del DTPM desde 2014): feed vigente por fecha, rutas, paradas, frecuencias y trazados. Los datos están en `fuente=dtpm`, no en `fuente=red-movilidad` |
