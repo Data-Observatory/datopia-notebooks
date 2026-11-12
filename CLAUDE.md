@@ -27,7 +27,8 @@ do-datopia-notebooks/
 ├── notebooks/
 │   ├── transporte/
 │   │   └── red-movilidad/
-│   │       └── demo.ipynb      ← dataset activo
+│   │       ├── demo.ipynb      ← posiciones GPS (dataset activo)
+│   │       └── gtfs.ipynb      ← segundo notebook de la misma familia: horarios y recorridos GTFS
 │   ├── medio-fisico/
 │   │   └── sinca/
 │   ├── salud/
@@ -53,6 +54,11 @@ Cada dataset vive en `notebooks/<categoria>/<fuente>/`. Al agregar un nuevo data
    `python scripts/build_index.py`; commitear `index.json` junto con el resto.
 6. Opcional, si el texto de `coverage` usa cifras reales: agregar una función en
    `scripts/compute_stats.py` y correr `python scripts/compute_stats.py <fuente>`.
+
+Una carpeta puede tener un segundo notebook de la misma familia de datos (ej. `red-movilidad/gtfs.ipynb`):
+mismo nivel de profundidad (`../../../config.json`), badge de Colab con su propia ruta y una nota en el
+`README.md` de la carpeta. **`index.json` es por carpeta y solo lista `demo.ipynb`** (`build_index.py` fija
+ese nombre): el segundo notebook se menciona en el texto de `meta.json`, pero no tiene entrada propia.
 
 ### Enlaces antiguos (notebooks que se movieron)
 
@@ -130,6 +136,28 @@ con.execute(f"""
 
 ---
 
+## GeoParquet: versiones y lectores
+
+Los datasets espaciales se publican como GeoParquet con geometría WKB en EPSG:4326. La versión que declara
+cada archivo está en su metadato `geo` (clave `version`; en DuckDB: `parquet_kv_metadata(archivo)` con
+`key = 'geo'`) y, en los datasets nuevos, en el `schema_version` de su `manifest.json`.
+
+- **1.1 es el valor por defecto de los datasets nuevos** (p. ej. las paradas y los trazados del GTFS del DTPM,
+  verificado el 2026-11-12). **2.0 solo lo usa hoy `division-territorial` v2** (`geografia-social`). Los datos
+  de `red-movilidad` declaran 1.0.0 (verificado en los 377 archivos diarios).
+- Un mismo árbol puede mezclar 1.x y 2.0: se lee sin problema.
+- **Lectores que abren 2.0:** pyarrow ≥ 20, geopandas ≥ 1.1, GDAL 3.11+ y DuckDB ≥ 1.4. **No lo abren Polars
+  (≤ 2.1.0) ni pyarrow ≤ 19**; DuckDB 1.3 sin `spatial` lee la geometría de un archivo 2.0 como BLOB, y con
+  `spatial` cargado y DuckDB < 1.4 da error.
+- **Predicados espaciales en SQL** (`ST_Intersects`, `ST_Contains`…): con DuckDB y su extensión `spatial`.
+- **Proyecciones en DuckDB:** escribir siempre `ST_Transform(geometry, 'EPSG:4326', 'EPSG:32719', always_xy := true)`;
+  sin `always_xy` los ejes salen intercambiados (en 1.x y en 2.0) y la forma corta falla en archivos 2.0.
+  No envolver vistas en `ST_SetCRS`.
+- Los datasets espaciales traen columnas para filtrar sin decodificar la geometría: `lon`/`lat` (puntos) o
+  `bbox_xmin`…`bbox_ymax` (líneas y polígonos). Usarlas antes del predicado exacto.
+
+---
+
 ## Datasets disponibles
 
 ### transporte / red-movilidad
@@ -141,7 +169,8 @@ s3://do-datopia/categoria=transporte/pais=cl/fuente=red-movilidad/tipo=posicion-
 
 **Particiones:** `year=YYYY/month=MM/day=DD/part-N.parquet`
 **Cobertura:** 2025-09-09 → ayer (~275 días, actualización diaria ~02:30 UTC)
-**Formato:** GeoParquet 1.0 — geometría WKB, requiere DuckDB (no Athena)
+**Formato:** GeoParquet — geometría WKB, requiere DuckDB con `spatial`. Los 377 archivos diarios declaran
+GeoParquet 1.0.0 en su metadato `geo` (verificado el 2026-11-12); ver "GeoParquet: versiones y lectores"
 **Escala:** ~7–13 M filas/día · ~7 000–7 500 vehículos/día · ~140–260 MB/día
 
 **Columnas:**
@@ -164,6 +193,41 @@ No existe columna `hour` — usar `EXTRACT(HOUR FROM timestamp_gps_utc)::INTEGER
 No hay columna con el código de servicio Sinoptic (ej. `T515`); solo `bus_route_consle`/`bus_route_assigned`.
 La clave de particiones en `dataset.json` puede aparecer como `partition_keys` o `partitioned_by` según
 el despliegue — al leer el catálogo, aceptar ambas: `meta.get("partitioned_by") or meta.get("partition_keys")`.
+
+#### Horarios y recorridos (GTFS del DTPM) — notebook `gtfs.ipynb`
+
+Misma familia de datos (transporte público RM), pero **en S3 viven bajo `fuente=dtpm`**, no bajo `fuente=red-movilidad`.
+Aún no figuran en el catálogo (`datamodel.json`): el notebook lee las rutas directamente.
+
+**Ruta S3:** `s3://do-datopia/categoria=transporte/pais=cl/fuente=dtpm/tipo=gtfs-<nombre>/version=v1/`
+
+**15 tablas planas (sin particiones):** `gtfs-feeds`, `gtfs-vigencia`, `gtfs-agency`, `gtfs-routes`, `gtfs-trips`,
+`gtfs-stop-times`, `gtfs-stops`, `gtfs-shapes`, `gtfs-shapes-lineas`, `gtfs-frequencies`, `gtfs-calendar`,
+`gtfs-calendar-dates`, `gtfs-pathways`, `gtfs-levels`, `gtfs-transfers`. Todas llevan `feed_id`; las columnas GTFS
+conservan su nombre. Espaciales (GeoParquet 1.1): `gtfs-stops` (puntos; `geometry`, `lon`, `lat`) y
+`gtfs-shapes-lineas` (una línea por `shape_id`; `bbox_*`, `length_m`).
+**Cobertura:** todos los feeds publicados desde 2014 (147 al 2026-11-12), el vigente se revisa a diario.
+**Archivos:** las tablas por feed (`trips`, `stop-times`, `stops`, `shapes`, `shapes-lineas`, `frequencies`) guardan un
+archivo por feed, `part-<feed_id con - en vez de _>-00000.parquet`; las demás, un solo archivo (`*.parquet`).
+**Escala:** `stop-times` ≈114 M filas, `shapes` ≈61 M; `trips`, `stops` y `frequencies` ≈2 M; el resto son tablas chicas.
+
+**Trampas:**
+- **Siempre filtrar por `feed_id`** antes de tocar `stop-times` o `shapes`: cada feed es una copia completa, sin
+  deduplicar. Con `feed_id` conocido, abrir directo el archivo del feed (más rápido que glob + `WHERE`, que abre los 147 footers).
+  Contar filas de toda la tabla solo lee los footers.
+- La clave es `feed_id`, **no `feed_version`** (se repite: `V125.20240706` rotula tres feeds distintos).
+- Resolver "qué feed rige un día" **solo con `gtfs-vigencia`** (`fecha_servicio` = día calendario de Santiago), no con
+  `feed_start_date`/`feed_end_date` ni `fecha_inicio`/`fecha_fin`. Hay feeds de evento especial (maratón,
+  elecciones) que rigen un solo día, y fechas sin feed (261 al 2026-11-12, en cinco tramos). Dentro del feed,
+  `gtfs-calendar` y `gtfs-calendar-dates` deciden qué servicios corren.
+- Horas: texto `HH:MM:SS` más su versión en segundos `*_s` desde el inicio del día de servicio. `24:00:00` solo
+  aparece en `frequencies.end_time`. Las horas de `stop-times` de buses son plantillas (desplazamientos desde 00:00
+  más frecuencia con `exact_times = 0`).
+- `gtfs-transfers` une tres esquemas de columnas (solo 2024-10 a 2026-02) y no tiene clave primaria.
+- Datos tal como se publicaron: `GTFS_20200926` tiene `stop_times` con 3 887 filas que apuntan a 136 paradas
+  inexistentes; `GTFS_20180922` repite la parada `PG1142`; `GTFS_20241109` tiene una parada sin `stop_id`.
+- Las posiciones de `red-movilidad` se particionan por día UTC; para cruzarlas con `fecha_servicio` convertir antes
+  a hora de Santiago.
 
 ### salud / deis-rem
 

@@ -42,7 +42,7 @@ Datos seleccionados y procesados por DO para facilitar el acceso directo. El cat
 **Arquitectura:**
 
 ```
-Cliente (DuckDB / Athena)
+Cliente (DuckDB)
     └── API Gateway  →  Lambda auth
             └── S3: do-datopia (us-west-2)
 ```
@@ -74,7 +74,7 @@ con.execute(f"""
 """)
 ```
 
-> **Athena:** posible para Parquet estándar. Datasets con geometría (GeoParquet/WKB) requieren DuckDB para predicados espaciales.
+> **Geometría:** los datasets con geometría (GeoParquet/WKB) se consultan con DuckDB y su extensión `spatial`, que es la que ofrece los predicados espaciales.
 
 **Características:**
 
