@@ -6,7 +6,7 @@
     "source": "RED Movilidad (RM)",
     "coverage": "{fecha_inicio} → hoy (diario{huecos_es})",
     "coverage_fallback": "Desde sep 2025 (diario)",
-    "description": "Posiciones GPS de la flota de buses de RED Movilidad, con actualización diaria y geometría de puntos. Incluye además los horarios y recorridos (feeds GTFS del DTPM desde 2014) en un segundo notebook."
+    "description": "Posiciones GPS de la flota de buses de RED Movilidad, con actualización diaria y geometría de puntos."
   },
   "en": {
     "name": "RED Movilidad",
@@ -14,6 +14,6 @@
     "source": "RED Movilidad (RM)",
     "coverage": "{fecha_inicio} → today (daily{huecos_en})",
     "coverage_fallback": "Since Sep 2025 (daily)",
-    "description": "GPS positions of the RED Movilidad bus fleet, updated daily, with point geometry. Also covers schedules and routes (DTPM GTFS feeds since 2014) in a second notebook."
+    "description": "GPS positions of the RED Movilidad bus fleet, updated daily, with point geometry."
   }
 }

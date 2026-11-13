@@ -26,9 +26,10 @@ do-datopia-notebooks/
 ├── snippets.json               ← snippets para el sitio, todos los idiomas (generado)
 ├── notebooks/
 │   ├── transporte/
-│   │   └── red-movilidad/
-│   │       ├── demo.ipynb      ← posiciones GPS (dataset activo)
-│   │       └── gtfs.ipynb      ← segundo notebook de la misma familia: horarios y recorridos GTFS
+│   │   ├── red-movilidad/
+│   │   │   └── demo.ipynb      ← posiciones GPS (dataset activo)
+│   │   └── dtpm/
+│   │       └── demo.ipynb      ← horarios y recorridos GTFS del DTPM
 │   ├── medio-fisico/
 │   │   └── sinca/
 │   ├── salud/
@@ -54,11 +55,6 @@ Cada dataset vive en `notebooks/<categoria>/<fuente>/`. Al agregar un nuevo data
    `python scripts/build_index.py`; commitear `index.json` junto con el resto.
 6. Opcional, si el texto de `coverage` usa cifras reales: agregar una función en
    `scripts/compute_stats.py` y correr `python scripts/compute_stats.py <fuente>`.
-
-Una carpeta puede tener un segundo notebook de la misma familia de datos (ej. `red-movilidad/gtfs.ipynb`):
-mismo nivel de profundidad (`../../../config.json`), badge de Colab con su propia ruta y una nota en el
-`README.md` de la carpeta. **`index.json` es por carpeta y solo lista `demo.ipynb`** (`build_index.py` fija
-ese nombre): el segundo notebook se menciona en el texto de `meta.json`, pero no tiene entrada propia.
 
 ### Enlaces antiguos (notebooks que se movieron)
 
@@ -194,9 +190,9 @@ No hay columna con el código de servicio Sinoptic (ej. `T515`); solo `bus_route
 La clave de particiones en `dataset.json` puede aparecer como `partition_keys` o `partitioned_by` según
 el despliegue — al leer el catálogo, aceptar ambas: `meta.get("partitioned_by") or meta.get("partition_keys")`.
 
-#### Horarios y recorridos (GTFS del DTPM) — notebook `gtfs.ipynb`
+### transporte / dtpm
 
-Misma familia de datos (transporte público RM), pero **en S3 viven bajo `fuente=dtpm`**, no bajo `fuente=red-movilidad`.
+Horarios y recorridos del transporte público de la RM (GTFS del DTPM). Notebook: `notebooks/transporte/dtpm/demo.ipynb`.
 Aún no figuran en el catálogo (`datamodel.json`): el notebook lee las rutas directamente.
 
 **Ruta S3:** `s3://do-datopia/categoria=transporte/pais=cl/fuente=dtpm/tipo=gtfs-<nombre>/version=v1/`

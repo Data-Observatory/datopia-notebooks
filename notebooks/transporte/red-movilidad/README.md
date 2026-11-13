@@ -47,4 +47,3 @@ con.execute("""
 | Archivo | Descripción |
 |---------|-------------|
 | `demo.ipynb` | Notebook de demostración: autenticación, exploración, consultas y visualizaciones |
-| `gtfs.ipynb` | Horarios y recorridos del transporte público (feeds GTFS del DTPM desde 2014): feed vigente por fecha, rutas, paradas, frecuencias y trazados. Los datos están en `fuente=dtpm`, no en `fuente=red-movilidad` |
