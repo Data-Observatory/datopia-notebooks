@@ -60,10 +60,11 @@ Cada dataset vive en `notebooks/<categoria>/<fuente>/`. Al agregar un nuevo data
 
 GitHub no redirige archivos movidos. Los notebooks vivían en `<categoria>/<fuente>/` y ahora están en
 `notebooks/<categoria>/<fuente>/` (la categoría no cambia: carpeta, S3 y OCDE usan el mismo nombre).
-En las rutas antiguas queda un `demo.ipynb` mínimo que dice dónde está el nuevo y trae
-su badge de Colab. `scripts/check_moved.py` (CI) verifica que cada uno apunte a un notebook que existe.
-Esos stubs son temporales: eliminarlos cuando ya no se usen los enlaces antiguos (a lo menos 6 meses).
-**No** crear carpetas nuevas fuera de `notebooks/`, y **no** mover un notebook sin dejar su stub.
+Los `demo.ipynb` mínimos que quedaban en las rutas antiguas se eliminaron el 2026-11-13: los enlaces
+antiguos `<categoria>/<fuente>/demo.ipynb` (y sus badges de Colab) ya no funcionan; usar siempre la ruta
+`notebooks/<categoria>/<fuente>/demo.ipynb`. **No** crear carpetas nuevas fuera de `notebooks/`.
+`scripts/check_moved.py` (CI) sigue como guarda: falla si aparece un `*/*/demo.ipynb` fuera de `notebooks/`
+(sin stub vigente no hay nada más que verificar, y con cero stubs pasa).
 
 ### Snippets de conexión
 
