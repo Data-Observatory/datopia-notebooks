@@ -41,11 +41,11 @@
       "dir": "geoespacial",
       "es": {
         "title": "Datos geoespaciales (GeoParquet)",
-        "description": "Filtra por tiempo y caja geográfica en DuckDB y pasa el resultado a geopandas o sf. Ejemplo: transporte / red-movilidad."
+        "description": "Filtra por tiempo y caja geográfica en DuckDB y pasa el resultado a geopandas o sf. Ejemplo: transporte / dtpm (posiciones GPS)."
       },
       "en": {
         "title": "Geospatial data (GeoParquet)",
-        "description": "Filter by time and bounding box in DuckDB and hand the result to geopandas or sf. Example: transporte / red-movilidad."
+        "description": "Filter by time and bounding box in DuckDB and hand the result to geopandas or sf. Example: transporte / dtpm (GPS positions)."
       }
     }
   ],
