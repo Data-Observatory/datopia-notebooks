@@ -1,5 +1,5 @@
 {
-  "format": "GeoParquet",
+  "format": "Parquet",
   "notebooks": [
     {
       "file": "demo.ipynb",

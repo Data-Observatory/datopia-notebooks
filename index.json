@@ -21,7 +21,7 @@
   {
     "id": "dtpm",
     "path": "notebooks/transporte/dtpm/demo.ipynb",
-    "format": "GeoParquet",
+    "format": "Parquet",
     "es": {
       "name": "DTPM — Transporte público RM",
       "category": "Transporte",
