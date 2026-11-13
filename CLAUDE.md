@@ -26,10 +26,9 @@ do-datopia-notebooks/
 ├── snippets.json               ← snippets para el sitio, todos los idiomas (generado)
 ├── notebooks/
 │   ├── transporte/
-│   │   ├── red-movilidad/
-│   │   │   └── demo.ipynb      ← posiciones GPS (dataset activo)
-│   │   └── dtpm/
-│   │       └── demo.ipynb      ← horarios y recorridos GTFS del DTPM
+│   │   └── dtpm/               ← todo el transporte público RM: una carpeta, dos notebooks
+│   │       ├── demo.ipynb      ← horarios y recorridos GTFS (el que apunta index.json en `path`)
+│   │       └── posiciones.ipynb ← posiciones GPS de RED Movilidad (listado en `notebooks` de index.json)
 │   ├── medio-fisico/
 │   │   └── sinca/
 │   ├── salud/
@@ -48,7 +47,7 @@ do-datopia-notebooks/
 
 Cada dataset vive en `notebooks/<categoria>/<fuente>/`. Al agregar un nuevo dataset:
 1. Crear la carpeta `notebooks/<categoria>/<fuente>/`.
-2. Copiar la estructura de `notebooks/transporte/red-movilidad/demo.ipynb` como plantilla.
+2. Copiar la estructura de `notebooks/transporte/dtpm/posiciones.ipynb` como plantilla.
 3. Actualizar `README.md` raíz con el nuevo badge "Open in Colab".
 4. Registrar el dataset en la sección **Datasets disponibles** de este archivo.
 5. Crear `meta.json` junto al notebook (copiar uno existente) y correr
@@ -78,7 +77,10 @@ idiomas en un solo archivo) lo consume el sitio y sale de `python scripts/build_
   `stats.json` vía `scripts/build_index.py` (solo biblioteca estándar, sin red). CI corre
   `--check` en cada PR y push a `main`.
 - `meta.json` (`format`, `es`, `en`) es la fuente de los textos. `id` y `path` los deriva el script
-  del nombre de carpeta.
+  del nombre de carpeta (`path` siempre apunta a `demo.ipynb`). Opcional: `notebooks` (lista de
+  `{"file", "es": {"name"}, "en": {"name"}}`, cada `file` debe existir en la carpeta) para carpetas con más de un
+  notebook (hoy solo `dtpm`); el script lo emite tal cual como campo extra `notebooks` de la entrada (con `path`
+  de cada uno), sin cambiar los campos existentes.
 - Cifras que cambian (estaciones, años, fechas) **no se escriben a mano**: `coverage` puede llevar
   campos `{entre_llaves}` que se rellenan desde `stats.json`, y `coverage_fallback` (obligatorio si
   hay campos) con texto aproximado ("+200 estaciones") que se usa si falta el `stats.json`.
@@ -141,7 +143,7 @@ cada archivo está en su metadato `geo` (clave `version`; en DuckDB: `parquet_kv
 
 - **1.1 es el valor por defecto de los datasets nuevos** (p. ej. las paradas y los trazados del GTFS del DTPM,
   verificado el 2026-11-12). **2.0 solo lo usa hoy `division-territorial` v2** (`geografia-social`). Los datos
-  de `red-movilidad` declaran 1.0.0 (verificado en los 377 archivos diarios).
+  de las posiciones (`fuente=red-movilidad`) declaran 1.0.0 (verificado en los 377 archivos diarios).
 - Un mismo árbol puede mezclar 1.x y 2.0: se lee sin problema.
 - **Lectores que abren 2.0:** pyarrow ≥ 20, geopandas ≥ 1.1, GDAL 3.11+ y DuckDB ≥ 1.4. **No lo abren Polars
   (≤ 2.1.0) ni pyarrow ≤ 19**; DuckDB 1.3 sin `spatial` lee la geometría de un archivo 2.0 como BLOB, y con
@@ -157,7 +159,16 @@ cada archivo está en su metadato `geo` (clave `version`; en DuckDB: `parquet_kv
 
 ## Datasets disponibles
 
-### transporte / red-movilidad
+### transporte / dtpm
+
+Todo el transporte público de la Región Metropolitana vive en una sola carpeta, `notebooks/transporte/dtpm/`, con dos
+notebooks. `meta.json`/`index.json` tienen una única entrada `dtpm` (`path` = `demo.ipynb`, el GTFS) y listan ambos
+notebooks en el campo opcional `notebooks`.
+
+#### Posiciones GPS diarias (RED Movilidad) — notebook `posiciones.ipynb`
+
+Notebook: `notebooks/transporte/dtpm/posiciones.ipynb`. Las posiciones pasarán a `fuente=dtpm` más adelante; **hoy en S3
+siguen bajo `fuente=red-movilidad`** (no cambiar la ruta de abajo hasta que los datos se muevan).
 
 **Ruta S3:**
 ```
@@ -191,9 +202,9 @@ No hay columna con el código de servicio Sinoptic (ej. `T515`); solo `bus_route
 La clave de particiones en `dataset.json` puede aparecer como `partition_keys` o `partitioned_by` según
 el despliegue — al leer el catálogo, aceptar ambas: `meta.get("partitioned_by") or meta.get("partition_keys")`.
 
-### transporte / dtpm
+#### Horarios y recorridos (GTFS del DTPM) — notebook `demo.ipynb`
 
-Horarios y recorridos del transporte público de la RM (GTFS del DTPM). Notebook: `notebooks/transporte/dtpm/demo.ipynb`.
+Notebook: `notebooks/transporte/dtpm/demo.ipynb`.
 Aún no figuran en el catálogo (`datamodel.json`): el notebook lee las rutas directamente.
 
 **Ruta S3:** `s3://do-datopia/categoria=transporte/pais=cl/fuente=dtpm/tipo=gtfs-<nombre>/version=v1/`
@@ -223,7 +234,7 @@ archivo por feed, `part-<feed_id con - en vez de _>-00000.parquet`; las demás, 
 - `gtfs-transfers` une tres esquemas de columnas (solo 2024-10 a 2026-02) y no tiene clave primaria.
 - Datos tal como se publicaron: `GTFS_20200926` tiene `stop_times` con 3 887 filas que apuntan a 136 paradas
   inexistentes; `GTFS_20180922` repite la parada `PG1142`; `GTFS_20241109` tiene una parada sin `stop_id`.
-- Las posiciones de `red-movilidad` se particionan por día UTC; para cruzarlas con `fecha_servicio` convertir antes
+- Las posiciones GPS (`fuente=red-movilidad`) se particionan por día UTC; para cruzarlas con `fecha_servicio` convertir antes
   a hora de Santiago.
 
 ### salud / deis-rem

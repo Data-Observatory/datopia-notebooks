@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Calcula cifras agregadas de cada dataset y las guarda en `<categoria>/<fuente>/stats.json`.
+"""Calcula cifras agregadas de cada dataset y las guarda en `notebooks/<categoria>/<fuente>/stats.json`.
 
 Uso:
     python scripts/compute_stats.py                  # todos los datasets
@@ -162,7 +162,7 @@ def format_gaps(ranges, template_one_day, template_range, template_many):
     return "; ".join(parts)
 
 
-def stats_red_movilidad(con, bucket):
+def stats_dtpm_posiciones(con, bucket):
     base = (
         f"s3://{bucket}/categoria=transporte/pais=cl/fuente=red-movilidad"
         "/tipo=posicion-diaria/version=v1"
@@ -207,7 +207,7 @@ def stats_red_movilidad(con, bucket):
 DATASETS = {
     "sinca": ("notebooks/medio-fisico/sinca", stats_sinca),
     "deis-rem": ("notebooks/salud/deis-rem", stats_deis_rem),
-    "red-movilidad": ("notebooks/transporte/red-movilidad", stats_red_movilidad),
+    "dtpm": ("notebooks/transporte/dtpm", stats_dtpm_posiciones),
     "ine": ("notebooks/sociologia/ine", stats_ine),
 }
 

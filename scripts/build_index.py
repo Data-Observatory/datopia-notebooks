@@ -20,6 +20,7 @@ NOTEBOOKS_DIR = ROOT / "notebooks"
 INDEX_PATH = ROOT / "index.json"
 
 TOP_LEVEL_KEYS = {"format", "es", "en"}
+OPTIONAL_TOP_LEVEL_KEYS = {"notebooks"}  # lista opcional de notebooks de la carpeta (ver validate_notebooks)
 REQUIRED_TEXT_KEYS = ["name", "category", "source", "coverage", "description"]
 OPTIONAL_TEXT_KEYS = ["coverage_fallback"]
 
@@ -82,6 +83,46 @@ def validate_language_block(block, where, errors):
     return ok
 
 
+def validate_notebooks(items, folder, where, errors):
+    """Valida `notebooks` de meta.json y devuelve la lista para el índice (o None si hay errores).
+
+    Cada elemento: {"file": "<nombre>.ipynb", "es": {"name": ...}, "en": {"name": ...}}; el archivo debe
+    existir en la misma carpeta. El resultado agrega `path` con la misma regla que la entrada principal.
+    """
+    if not isinstance(items, list) or not items:
+        errors.append(f"{where}: 'notebooks' debe ser una lista no vacía")
+        return None
+    result, seen, ok = [], set(), True
+    for position, item in enumerate(items):
+        label = f"{where} notebooks[{position}]"
+        if not isinstance(item, dict) or set(item) != {"file", "es", "en"}:
+            errors.append(f"{label}: debe ser un objeto con exactamente las claves file, es, en")
+            ok = False
+            continue
+        name = item["file"]
+        if not isinstance(name, str) or "/" in name or not name.endswith(".ipynb"):
+            errors.append(f"{label}: 'file' debe ser el nombre de un .ipynb de la misma carpeta")
+            ok = False
+            continue
+        if name in seen:
+            errors.append(f"{label}: archivo repetido '{name}'")
+            ok = False
+        seen.add(name)
+        if not (folder / name).exists():
+            errors.append(f"{label}: no existe {folder.relative_to(ROOT).as_posix()}/{name}")
+            ok = False
+        texts = {}
+        for lang in ("es", "en"):
+            block = item[lang]
+            value = block.get("name") if isinstance(block, dict) and set(block) == {"name"} else None
+            if not isinstance(value, str) or not value.strip():
+                errors.append(f"{label} [{lang}]: debe ser {{\"name\": <texto no vacío>}}")
+                ok = False
+            texts[lang] = {"name": value}
+        result.append({"file": name, "path": f"{folder.relative_to(ROOT).as_posix()}/{name}", **texts})
+    return result if ok else None
+
+
 def load_json(path, errors):
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -115,7 +156,7 @@ def build_entries():
             continue
 
         missing = TOP_LEVEL_KEYS - set(meta)
-        unknown = set(meta) - TOP_LEVEL_KEYS
+        unknown = set(meta) - TOP_LEVEL_KEYS - OPTIONAL_TOP_LEVEL_KEYS
         if missing:
             errors.append(f"{relative}/meta.json: faltan las claves {sorted(missing)}")
         if unknown:
@@ -152,6 +193,11 @@ def build_entries():
             text = {key: block[key] for key in REQUIRED_TEXT_KEYS}
             text["coverage"] = render_coverage(block, stats, f"{relative}/meta.json [{lang}]", errors)
             entry[lang] = text
+        if "notebooks" in meta:
+            listed = validate_notebooks(meta["notebooks"], folder, f"{relative}/meta.json", errors)
+            if listed is None:
+                continue
+            entry["notebooks"] = listed
         entries.append(entry)
 
     entries.sort(key=lambda entry: entry["id"])

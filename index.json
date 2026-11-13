@@ -21,21 +21,43 @@
   {
     "id": "dtpm",
     "path": "notebooks/transporte/dtpm/demo.ipynb",
-    "format": "Parquet/GeoParquet",
+    "format": "GeoParquet",
     "es": {
-      "name": "DTPM — GTFS (horarios y recorridos)",
+      "name": "DTPM — Transporte público RM",
       "category": "Transporte",
-      "source": "DTPM (Directorio de Transporte Público Metropolitano)",
-      "coverage": "Desde 2014 (todos los feeds publicados; el vigente se revisa a diario)",
-      "description": "Horarios y recorridos del transporte público de la Región Metropolitana según los feeds GTFS que publica el DTPM desde 2014, en 15 tablas planas (feeds, vigencia, operadores, rutas, viajes, horarios de paso, paradas, trazados, frecuencias, calendarios, transferencias y otras). Las paradas y los trazados son GeoParquet."
+      "source": "DTPM (Directorio de Transporte Público Metropolitano) y RED Movilidad",
+      "coverage": "Posiciones GPS: 2025-09-09 → hoy (diario; sin datos 2026-07-07 a 2026-08-27); GTFS: desde 2014 (todos los feeds, el vigente se revisa a diario)",
+      "description": "Transporte público de la Región Metropolitana en dos notebooks: las posiciones GPS de la flota de buses de RED Movilidad, con actualización diaria y geometría de puntos, y los horarios y recorridos de los feeds GTFS que publica el DTPM desde 2014 (15 tablas planas; paradas y trazados en GeoParquet, el resto en Parquet)."
     },
     "en": {
-      "name": "DTPM — GTFS (schedules and routes)",
+      "name": "DTPM — Public transport, Santiago",
       "category": "Transport",
-      "source": "DTPM (Metropolitan Public Transport Directorate)",
-      "coverage": "Since 2014 (every published feed; the current one is checked daily)",
-      "description": "Public transport schedules and routes for the Santiago Metropolitan Region from the GTFS feeds published by the DTPM since 2014, in 15 flat tables (feeds, validity, agencies, routes, trips, stop times, stops, shapes, frequencies, calendars, transfers and others). Stops and shapes are GeoParquet."
-    }
+      "source": "DTPM (Metropolitan Public Transport Directorate) and RED Movilidad",
+      "coverage": "GPS positions: 2025-09-09 → today (daily; no data 2026-07-07 to 2026-08-27); GTFS: since 2014 (every feed, the current one is checked daily)",
+      "description": "Public transport in the Santiago Metropolitan Region in two notebooks: GPS positions of the RED Movilidad bus fleet, updated daily with point geometry, and the schedules and routes from the GTFS feeds the DTPM has published since 2014 (15 flat tables; stops and shapes as GeoParquet, the rest as Parquet)."
+    },
+    "notebooks": [
+      {
+        "file": "demo.ipynb",
+        "path": "notebooks/transporte/dtpm/demo.ipynb",
+        "es": {
+          "name": "Horarios y recorridos (GTFS)"
+        },
+        "en": {
+          "name": "Schedules and routes (GTFS)"
+        }
+      },
+      {
+        "file": "posiciones.ipynb",
+        "path": "notebooks/transporte/dtpm/posiciones.ipynb",
+        "es": {
+          "name": "Posiciones GPS de la flota (RED Movilidad)"
+        },
+        "en": {
+          "name": "Fleet GPS positions (RED Movilidad)"
+        }
+      }
+    ]
   },
   {
     "id": "ine",
@@ -54,25 +76,6 @@
       "source": "INE — Population and Housing Censuses",
       "coverage": "2017 and 2024 censuses (microdata by dwelling, household and person)",
       "description": "Microdata of the INE Population and Housing Censuses in wide and long format, with census geography and a questions dictionary."
-    }
-  },
-  {
-    "id": "red-movilidad",
-    "path": "notebooks/transporte/red-movilidad/demo.ipynb",
-    "format": "GeoParquet",
-    "es": {
-      "name": "RED Movilidad",
-      "category": "Transporte",
-      "source": "RED Movilidad (RM)",
-      "coverage": "2025-09-09 → hoy (diario; sin datos 2026-07-07 a 2026-08-27)",
-      "description": "Posiciones GPS de la flota de buses de RED Movilidad, con actualización diaria y geometría de puntos."
-    },
-    "en": {
-      "name": "RED Movilidad",
-      "category": "Transport",
-      "source": "RED Movilidad (RM)",
-      "coverage": "2025-09-09 → today (daily; no data 2026-07-07 to 2026-08-27)",
-      "description": "GPS positions of the RED Movilidad bus fleet, updated daily, with point geometry."
     }
   },
   {
