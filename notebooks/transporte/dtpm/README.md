@@ -60,9 +60,16 @@ a diario y todos los feeds anteriores se conservan.
 ### Notas sobre los datos
 
 **Ruta S3.** `s3://do-datopia/categoria=transporte/pais=cl/fuente=dtpm/tipo=gtfs-<nombre>/version=v1/`. Son 15
-tablas planas, sin particiones por fecha: `gtfs-feeds`, `gtfs-vigencia`, `gtfs-agency`, `gtfs-routes`,
-`gtfs-trips`, `gtfs-stop-times`, `gtfs-stops`, `gtfs-shapes`, `gtfs-shapes-lineas`, `gtfs-frequencies`,
-`gtfs-calendar`, `gtfs-calendar-dates`, `gtfs-pathways`, `gtfs-levels` y `gtfs-transfers`.
+tablas: 9 planas, sin particiones (`gtfs-feeds`, `gtfs-vigencia`, `gtfs-agency`, `gtfs-routes`, `gtfs-calendar`,
+`gtfs-calendar-dates`, `gtfs-pathways`, `gtfs-levels` y `gtfs-transfers`) y 6 por feed, particionadas por `year`
+(`gtfs-trips`, `gtfs-stop-times`, `gtfs-stops`, `gtfs-shapes`, `gtfs-shapes-lineas` y `gtfs-frequencies`): un archivo
+por año, `year=AAAA/part-<ejecución>-00000.parquet`, con todos los feeds cuyo `feed_start_date` cae en ese año.
+
+**`year` no es una fecha de servicio.** Es el año de inicio declarado del feed (`year(feed_start_date)` en
+`gtfs-feeds`): un feed que parte en diciembre rige en enero y vive en el año anterior. Regla: **filtrar siempre por
+`feed_id`**; agregar el `year` del feed solo para leer menos archivos; nunca filtrar solo por `year`. Para saber el
+`feed_id` de una fecha, usar `gtfs-vigencia` y `gtfs-feeds`. En un join entre dos tablas por feed, poner el literal
+`year` en cada tabla.
 
 **Una copia completa por feed.** Todas las tablas llevan `feed_id` y cada feed se guarda completo, sin
 deduplicar. Filtrar siempre por `feed_id` antes de leer `gtfs-stop-times` o `gtfs-shapes`, que son muy grandes.

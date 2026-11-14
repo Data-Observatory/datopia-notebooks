@@ -209,19 +209,25 @@ Aún no figuran en el catálogo (`datamodel.json`): el notebook lee las rutas di
 
 **Ruta S3:** `s3://do-datopia/categoria=transporte/pais=cl/fuente=dtpm/tipo=gtfs-<nombre>/version=v1/`
 
-**15 tablas planas (sin particiones):** `gtfs-feeds`, `gtfs-vigencia`, `gtfs-agency`, `gtfs-routes`, `gtfs-trips`,
+**15 tablas** (las 6 por feed con una partición `year`, las otras 9 planas): `gtfs-feeds`, `gtfs-vigencia`, `gtfs-agency`, `gtfs-routes`, `gtfs-trips`,
 `gtfs-stop-times`, `gtfs-stops`, `gtfs-shapes`, `gtfs-shapes-lineas`, `gtfs-frequencies`, `gtfs-calendar`,
 `gtfs-calendar-dates`, `gtfs-pathways`, `gtfs-levels`, `gtfs-transfers`. Todas llevan `feed_id`; las columnas GTFS
 conservan su nombre. Espaciales (GeoParquet 1.1): `gtfs-stops` (puntos; `geometry`, `lon`, `lat`) y
 `gtfs-shapes-lineas` (una línea por `shape_id`; `bbox_*`, `length_m`).
 **Cobertura:** todos los feeds publicados desde 2014 (147 al 2026-11-12), el vigente se revisa a diario.
 **Archivos:** las tablas por feed (`trips`, `stop-times`, `stops`, `shapes`, `shapes-lineas`, `frequencies`) guardan un
-archivo por feed, `part-<feed_id con - en vez de _>-00000.parquet`; las demás, un solo archivo (`*.parquet`).
+archivo por año, `year=AAAA/part-<ejecución>-00000.parquet`, con todos los feeds cuyo `feed_start_date` cae en ese año
+(13 años, 2014–2026; los feeds de cada archivo van en orden de `feed_id`); las demás, un solo archivo (`*.parquet`).
+`year` es una clave de almacenamiento, **no una fecha de servicio**: un feed que parte en diciembre rige en enero y vive
+en el año anterior. Regla: **siempre `feed_id`; `year` solo para leer menos archivos; nunca `year` solo.** El `year` de un
+feed es `year(feed_start_date)` de `gtfs-feeds`. En DuckDB, con un join entre dos tablas por feed, pon el literal `year` en
+cada tabla (y una columna de cada lado en el SELECT) para que el plan del MCP cuente un archivo por tabla.
 **Escala:** `stop-times` ≈114 M filas, `shapes` ≈61 M; `trips`, `stops` y `frequencies` ≈2 M; el resto son tablas chicas.
 
 **Trampas:**
 - **Siempre filtrar por `feed_id`** antes de tocar `stop-times` o `shapes`: cada feed es una copia completa, sin
-  deduplicar. Con `feed_id` conocido, abrir directo el archivo del feed (más rápido que glob + `WHERE`, que abre los 147 footers).
+  deduplicar. Con `feed_id` conocido, abrir directo el archivo de su año (`year=AAAA/`) y filtrar por `feed_id` (más rápido que
+  glob + `WHERE`, que abre el footer de los 13 archivos).
   Contar filas de toda la tabla solo lee los footers.
 - La clave es `feed_id`, **no `feed_version`** (se repite: `V125.20240706` rotula tres feeds distintos).
 - Resolver "qué feed rige un día" **solo con `gtfs-vigencia`** (`fecha_servicio` = día calendario de Santiago), no con
