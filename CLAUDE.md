@@ -38,7 +38,8 @@ do-datopia-notebooks/
 │   ├── geografia-social/
 │   │   └── subdere/
 │   ├── interoperabilidad/        ← demo que une 4 fuentes (sin datos propios)
-│   │   └── aire-salud/
+│   │   ├── aire-salud/
+│   │   └── grafo/                ← grafo de conexiones entre datasets (visor HTML + módulo)
 │   └── <categoria>/            ← nuevas categorías se agregan aquí
 │       └── <fuente>/
 │           └── demo.ipynb
