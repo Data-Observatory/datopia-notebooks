@@ -79,6 +79,25 @@
     ]
   },
   {
+    "id": "grafo",
+    "path": "notebooks/interoperabilidad/grafo/demo.ipynb",
+    "format": "Parquet / GeoParquet",
+    "es": {
+      "name": "Grafo de datasets",
+      "category": "Interoperabilidad",
+      "source": "Modelo de datos público de Datopia (_meta/datamodel.json)",
+      "coverage": "Todos los datasets publicados (grafo hoy y objetivo)",
+      "description": "Grafo interactivo de cómo se conectan los datasets: llaves foráneas por tabla común, geometrías y capa espacial hacia las comunas."
+    },
+    "en": {
+      "name": "Dataset graph",
+      "category": "Interoperability",
+      "source": "Datopia public data model (_meta/datamodel.json)",
+      "coverage": "Every published dataset (graph today and target state)",
+      "description": "Interactive graph of how datasets connect: foreign keys through a common table, geometries and a spatial layer to the comunas."
+    }
+  },
+  {
     "id": "ine",
     "path": "notebooks/sociologia/ine/demo.ipynb",
     "format": "Parquet",

@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grafo de datasets de Datopia</title>
+<style>
+:root{--bg:#fafaf7;--panel:#fff;--ink:#1b1f23;--mut:#5b6670;--line:#c9d0d6;--tab:#4a5560;--obj:#3949ab;--adv:#b26a00;--esp:#00897b;--fus:#8e24aa;--foco:#1565c0}
+@media (prefers-color-scheme:dark){:root{--bg:#14171a;--panel:#1d2227;--ink:#e8ecef;--mut:#9aa6b0;--line:#3a444d;--tab:#aab5bf;--obj:#8c9eff;--adv:#ffb74d;--esp:#4db6ac;--fus:#ce93d8;--foco:#64b5f6}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:12px 16px 4px}
+h1{font-size:18px;margin:0 0 2px}
+header p{margin:0;color:var(--mut);max-width:80ch}
+.barra{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:8px 16px;border-bottom:1px solid var(--line)}
+.barra fieldset{border:0;margin:0;padding:0;display:flex;gap:10px;align-items:center}
+.barra legend{float:left;margin-right:8px;color:var(--mut);font-size:12px}
+label{cursor:pointer;white-space:nowrap}
+button,input[type=search]{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 10px}
+button{cursor:pointer;min-width:32px;min-height:28px}
+button[aria-pressed=true]{background:var(--foco);color:#fff;border-color:var(--foco)}
+:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:6px 16px}
+.chip{display:inline-flex;gap:6px;align-items:center;padding:2px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:12px}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.chip[aria-pressed=false]{opacity:.45}
+main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:12px;padding:8px 16px 16px}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+.lienzo{background:var(--panel);border:1px solid var(--line);border-radius:8px;position:relative;overflow:hidden}
+svg{display:block;width:100%;height:auto;touch-action:none;cursor:grab}
+svg.arrastrando{cursor:grabbing}
+.zoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px}
+.nodo{cursor:pointer}
+.nodo text{font-size:9.5px;fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:3px;pointer-events:none}
+.nodo:focus-visible circle.c,.nodo.sel circle.c{stroke:var(--foco);stroke-width:3}
+.nodo.apagado,.arista.apagada{opacity:.12}
+.arista{fill:none}
+.arista.hoy-ok{stroke:var(--tab);stroke-width:1.4}
+.arista.hoy-parcial{stroke:var(--tab);stroke-width:1.2;stroke-dasharray:7 3 1 3}
+.arista.objetivo{stroke:var(--obj);stroke-width:1.6;stroke-dasharray:2 4;stroke-linecap:round}
+.arista.advertencia{stroke:var(--adv)}
+.arista.fusion{stroke:var(--fus);stroke-width:2.2;stroke-dasharray:1 4;stroke-linecap:round}
+.arista.espacial{stroke:var(--esp);stroke-width:1.6}
+.arista.par{stroke:var(--esp);stroke-width:.8;stroke-dasharray:1 3;opacity:.55}
+.arista.sel{stroke-width:3.2;opacity:1}
+.sim{font-size:12px;fill:var(--adv);paint-order:stroke;stroke:var(--panel);stroke-width:3px;pointer-events:none}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;max-height:78vh;overflow:auto}
+aside h2{font-size:15px;margin:0 0 4px}
+aside h3{font-size:12px;margin:12px 0 4px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+aside ul{margin:0;padding-left:18px}
+aside li{margin:2px 0}
+code{font-size:12px;background:rgba(127,127,127,.15);padding:0 4px;border-radius:3px}
+.mut{color:var(--mut)}
+.leyenda{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--mut)}
+.leyenda span{display:inline-flex;align-items:center;gap:6px}
+.leyenda svg{width:34px;height:10px;cursor:default}
+table{border-collapse:collapse;width:100%;font-size:12.5px;background:var(--panel)}
+th,td{border:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:var(--panel)}
+.vista-tabla{display:none;padding:0 16px 16px;overflow:auto}
+body.tabla .vista-tabla{display:block}
+body.tabla main{display:none}
+.sr{position:absolute;left:-9999px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Grafo de conexiones entre datasets de Datopia</h1>
+  <p>Cada nodo es un dataset; una línea es una relación por columnas compartidas con una tabla. Dos datasets se relacionan si uno referencia al otro o si ambos referencian una misma tabla (la tabla compartida es un nodo). La insignia de un nodo indica que tiene geometría; la capa espacial las conecta con las comunas. Datos: <code>_meta/datamodel.json</code> más <code>relaciones-objetivo.json</code>.</p>
+</header>
+
+<div class="barra" role="group" aria-label="Controles">
+  <fieldset><legend>Estado</legend>
+    <label><input type="radio" name="estado" value="objetivo" checked> Objetivo (#56 a #59 cerrados)</label>
+    <label><input type="radio" name="estado" value="hoy"> Hoy (lo publicado)</label>
+  </fieldset>
+  <fieldset><legend>Capas</legend>
+    <label><input type="checkbox" id="c-esp" checked> Espacial (hacia las comunas)</label>
+    <label><input type="checkbox" id="c-par"> Todos los pares espaciales (teórico)</label>
+  </fieldset>
+  <input type="search" id="buscar" placeholder="Buscar dataset" aria-label="Buscar dataset">
+  <button id="v-mapa" aria-pressed="true">Mapa</button>
+  <button id="v-tabla" aria-pressed="false">Tabla</button>
+</div>
+<div class="chips" id="chips" role="group" aria-label="Grupos de datasets"></div>
+
+<main>
+  <div class="lienzo">
+    <div class="zoom">
+      <button id="z-mas" aria-label="Acercar">+</button>
+      <button id="z-menos" aria-label="Alejar">−</button>
+      <button id="z-ini" aria-label="Restablecer vista">⟲</button>
+    </div>
+    <svg id="svg" viewBox="0 0 1200 800" role="img" aria-label="Grafo de datasets; la vista Tabla tiene la misma información en texto">
+      <defs>
+        <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9z" fill="context-stroke"/></marker>
+      </defs>
+      <g id="vista"><g id="g-aristas"></g><g id="g-sim"></g><g id="g-nodos"></g></g>
+    </svg>
+  </div>
+  <aside id="tarjeta" aria-live="polite"><h2>Elige un dataset</h2><p class="mut">Haz clic (o Enter) en un nodo para ver sus columnas de unión, con qué datasets se relaciona y por qué tabla común. También se puede enlazar: <code>#n=&lt;id&gt;</code>.</p></aside>
+</main>
+
+<div class="vista-tabla" id="vista-tabla"></div>
+
+<div class="leyenda" id="leyenda">
+  <span><svg><line x1="0" y1="5" x2="34" y2="5" stroke="var(--tab)" stroke-width="1.6"/></svg>relación declarada (hoy)</span>
+  <span><svg><line x1="0" y1="5" x2="34" y2="5" stroke="var(--tab)" stroke-width="1.4" stroke-dasharray="7 3 1 3"/></svg>declarada, calidad parcial o sin verificar</span>
+  <span><svg><line x1="0" y1="5" x2="34" y2="5" stroke="var(--obj)" stroke-width="1.8" stroke-dasharray="2 4" stroke-linecap="round"/></svg>relación objetivo (se asume cerrada)</span>
+  <span><svg><line x1="0" y1="5" x2="34" y2="5" stroke="var(--adv)" stroke-width="1.8" stroke-dasharray="2 4" stroke-linecap="round"/></svg>⚠ objetivo con problema conocido (la relación teórica existe)</span>
+  <span><svg><line x1="0" y1="5" x2="34" y2="5" stroke="var(--fus)" stroke-width="2.2" stroke-dasharray="1 4" stroke-linecap="round"/></svg>fusión de datasets</span>
+  <span><svg><line x1="0" y1="5" x2="34" y2="5" stroke="var(--esp)" stroke-width="1.8"/></svg>espacial (dentro de / cruza)</span>
+  <span>Insignia: ● puntos · ∿ líneas · ⬠ polígonos; contorno punteado = geometría solo en el objetivo; ↻ jerarquía propia</span>
+</div>
+
+<script>
+const G = /*DATOS*/null;
+const COLORES = ["#1976d2","#f57c00","#5e35b1","#00897b","#d32f2f","#7b1fa2","#6d4c41","#546e7a"];
+const $ = (s, r = document) => r.querySelector(s);
+const el = (tag, attrs = {}, hijos = []) => {
+  const e = document.createElementNS(tag === "svg" || ["g","path","circle","line","text","rect","polygon","polyline","title"].includes(tag) ? "http://www.w3.org/2000/svg" : "http://www.w3.org/1999/xhtml", tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  for (const h of [].concat(hijos)) e.append(h);
+  return e;
+};
+const nodo = Object.fromEntries(G.nodos.map(n => [n.id, n]));
+const colorGrupo = Object.fromEntries(G.grupos.map((g, i) => [g.id, COLORES[i % COLORES.length]]));
+
+const estado = { modo: "objetivo", esp: true, par: false, sel: null, grupos: new Set(G.grupos.map(g => g.id)), q: "", vista: "mapa" };
+
+function leerHash() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  if (p.get("estado") === "hoy") estado.modo = "hoy";
+  if (p.get("esp") === "0") estado.esp = false;
+  if (p.get("par") === "1") estado.par = true;
+  if (p.get("n") && nodo[p.get("n")]) estado.sel = p.get("n");
+  if (p.get("vista") === "tabla") estado.vista = "tabla";
+}
+function escribirHash() {
+  const p = new URLSearchParams();
+  if (estado.modo === "hoy") p.set("estado", "hoy");
+  if (!estado.esp) p.set("esp", "0");
+  if (estado.par) p.set("par", "1");
+  if (estado.sel) p.set("n", estado.sel);
+  if (estado.vista === "tabla") p.set("vista", "tabla");
+  history.replaceState(null, "", "#" + p.toString());
+}
+
+const geomDe = n => estado.modo === "hoy" ? n.geometria_hoy : n.geometria_objetivo;
+function visible(e) {
+  if (e.tipo === "espacial") return estado.esp && e.estado === estado.modo;
+  if (e.tipo === "espacial-par") return estado.par && e.estado === estado.modo;
+  return e.estado === "hoy" || estado.modo === "objetivo";
+}
+function claseArista(e) {
+  if (e.tipo === "espacial") return "espacial";
+  if (e.tipo === "espacial-par") return "par";
+  if (e.tipo === "fusion") return "fusion";
+  if (e.estado === "objetivo") return "objetivo" + (e.advertencia ? " advertencia" : "");
+  return e.calidad === "verified" ? "hoy-ok" : "hoy-parcial";
+}
+const etiquetaCols = e => {
+  const f = e.columnas_desde.join(", "), t = e.columnas_hacia.join(", ");
+  return f || t ? `${f} → ${t}` : "";
+};
+
+function dibujar() {
+  const gA = $("#g-aristas"), gN = $("#g-nodos"), gS = $("#g-sim");
+  gA.replaceChildren(); gN.replaceChildren(); gS.replaceChildren();
+  const q = estado.q.trim().toLowerCase();
+  const apagadoNodo = n => !estado.grupos.has(n.grupo) || (q && !(n.etiqueta + " " + n.titulo).toLowerCase().includes(q));
+  const aristas = G.aristas.filter(visible);
+  const vecinos = new Set();
+  if (estado.sel) for (const e of aristas) { if (e.desde === estado.sel) vecinos.add(e.hacia); if (e.hacia === estado.sel) vecinos.add(e.desde); }
+  const nodosEnJuego = new Set(); // nodos con insignia o aristas visibles
+  for (const e of aristas) {
+    const a = nodo[e.desde], b = nodo[e.hacia];
+    const curva = e.tipo === "espacial" || e.tipo === "espacial-par";
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+    const k = curva ? 0.16 : 0;
+    const cx = mx - dy / d * d * k, cy = my + dx / d * d * k;
+    const p = el("path", { d: `M${a.x},${a.y} Q${cx},${cy} ${b.x},${b.y}`, class: "arista " + claseArista(e) });
+    if (e.tipo === "tabular" || e.tipo === "fusion" || e.tipo === "espacial") p.setAttribute("marker-end", "url(#flecha)");
+    const rel = estado.sel && (e.desde === estado.sel || e.hacia === estado.sel);
+    if (rel) p.classList.add("sel");
+    if (apagadoNodo(a) || apagadoNodo(b) || (estado.sel && !rel)) p.classList.add("apagada");
+    p.append(el("title", {}, [document.createTextNode(`${nodo[e.desde].etiqueta} → ${nodo[e.hacia].etiqueta}` + (e.predicado ? ` (${e.predicado})` : "") + (etiquetaCols(e) ? `: ${etiquetaCols(e)}` : "") + (e.advertencia ? ` ⚠ ${e.advertencia}` : ""))]));
+    gA.append(p);
+    if (e.advertencia && !p.classList.contains("apagada")) gS.append(el("text", { x: cx / 2 + mx / 2, y: cy / 2 + my / 2 + 4, class: "sim", "text-anchor": "middle" }, [document.createTextNode("⚠")]));
+  }
+  for (const n of G.nodos) {
+    const apag = apagadoNodo(n) || (estado.sel && n.id !== estado.sel && !vecinos.has(n.id));
+    const r = 6 + Math.min(14, Math.sqrt(n.referenciado_por) * 3.4);
+    const g = el("g", { class: "nodo" + (n.id === estado.sel ? " sel" : "") + (apag ? " apagado" : ""), tabindex: 0, role: "button", "aria-label": `${n.etiqueta}: ${n.titulo}`, transform: `translate(${n.x},${n.y})` });
+    g.append(el("circle", { class: "c", r, fill: colorGrupo[n.grupo], "fill-opacity": ".85", stroke: "var(--panel)", "stroke-width": 1.5 }));
+    if (estado.modo === "objetivo" && n.se_fusiona_en) g.append(el("circle", { r: r + 3, fill: "none", stroke: "var(--fus)", "stroke-width": 1.5, "stroke-dasharray": "3 3" }));
+    const gm = geomDe(n);
+    if (gm) {
+      const soloObjetivo = estado.modo === "objetivo" && !n.geometria_hoy;
+      const bx = r * 0.75, by = r * 0.75, st = { fill: "var(--panel)", stroke: "var(--esp)", "stroke-width": 1.4 };
+      if (soloObjetivo) st["stroke-dasharray"] = "2 2";
+      const ins = el("g", { transform: `translate(${bx},${by})` });
+      ins.append(el("circle", { r: 6.5, ...st }));
+      if (gm === "punto") ins.append(el("circle", { r: 2.2, fill: "var(--esp)" }));
+      if (gm === "linea") ins.append(el("path", { d: "M-4,2 Q-1.5,-4 0,0 T4,-2", fill: "none", stroke: "var(--esp)", "stroke-width": 1.4 }));
+      if (gm === "poligono") ins.append(el("polygon", { points: "0,-4 4,-1 2.5,3.5 -2.5,3.5 -4,-1", fill: "var(--esp)", "fill-opacity": ".5", stroke: "var(--esp)", "stroke-width": 1 }));
+      g.append(ins);
+    }
+    if (n.autoref) g.append(el("text", { x: -r - 1, y: -r + 2, "font-size": 10, fill: "var(--mut)", "text-anchor": "end", style: "paint-order:stroke;stroke:var(--panel);stroke-width:3px" }, [document.createTextNode("↻")]));
+    g.append(el("text", { y: r + 11, "text-anchor": "middle" }, [document.createTextNode(n.corta)]));
+    g.addEventListener("click", ev => { ev.stopPropagation(); elegir(n.id); });
+    g.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); elegir(n.id); } });
+    gN.append(g);
+  }
+  dibujarTabla(aristas);
+}
+
+function elegir(id) { estado.sel = estado.sel === id ? null : id; escribirHash(); dibujar(); tarjeta(); }
+
+function tarjeta() {
+  const t = $("#tarjeta"); t.replaceChildren();
+  const n = nodo[estado.sel];
+  if (!n) { t.append(el("h2", {}, [document.createTextNode("Elige un dataset")]), el("p", { class: "mut" }, [document.createTextNode("Haz clic (o Enter) en un nodo para ver sus columnas de unión, con qué datasets se relaciona y por qué tabla común.")])); return; }
+  t.append(el("h2", {}, [document.createTextNode(n.titulo)]));
+  t.append(el("p", { class: "mut" }, [document.createTextNode(`${n.etiqueta} · ${n.grupo_titulo}`)]));
+  t.append(el("p", {}, [document.createTextNode(n.descripcion.length > 260 ? n.descripcion.slice(0, 257) + "…" : n.descripcion)]));
+  if (n.grano) t.append(el("p", { class: "mut" }, [document.createTextNode("Grano: " + n.grano)]));
+  if (n.llave.length) t.append(el("p", { class: "mut" }, [document.createTextNode("Llave: " + n.llave.join(", "))]));
+  const gm = geomDe(n);
+  if (gm) t.append(el("p", {}, [document.createTextNode(`Geometría: ${estado.modo === "hoy" ? n.geometria_tipo_hoy : n.geometria_tipo_objetivo}` + (estado.modo === "objetivo" && !n.geometria_hoy ? ` (aún no publicada, ${n.geometria_issue})` : ""))]));
+  if (n.se_fusiona_en && estado.modo === "objetivo") t.append(el("p", {}, [document.createTextNode("Se fusiona en " + nodo[n.se_fusiona_en].etiqueta + " (#59).")]));
+  const vis = G.aristas.filter(visible).filter(e => e.desde === n.id || e.hacia === n.id);
+  const lista = (titulo, items) => { if (!items.length) return; t.append(el("h3", {}, [document.createTextNode(titulo)])); const ul = el("ul"); items.forEach(i => ul.append(i)); t.append(ul); };
+  const li = (e, saliente) => {
+    const otro = nodo[saliente ? e.hacia : e.desde];
+    const li = el("li", {}, [document.createTextNode(`${otro.etiqueta}`)]);
+    const det = [];
+    if (e.predicado) det.push(e.predicado);
+    if (etiquetaCols(e)) det.push(etiquetaCols(e));
+    if (e.estado === "objetivo" && e.tipo === "tabular") det.push("objetivo" + (e.issues.length ? " " + e.issues.join(" ") : ""));
+    if (e.columnas_pendientes.length) det.push("columna aún no publicada: " + e.columnas_pendientes.join(", "));
+    if (e.columnas_desde_hoy.length && e.columnas_desde_hoy.join() !== e.columnas_desde.join()) det.push("hoy: " + e.columnas_desde_hoy.join(", "));
+    if (det.length) li.append(el("br"), el("span", { class: "mut" }, [document.createTextNode(det.join(" · "))]));
+    if (e.vigencia) li.append(el("br"), el("span", { class: "mut" }, [document.createTextNode("Vigencia: " + e.vigencia)]));
+    if (e.advertencia) li.append(el("br"), el("span", { style: "color:var(--adv)" }, [document.createTextNode("⚠ " + e.advertencia)]));
+    return li;
+  };
+  lista("Referencia a (tablas)", vis.filter(e => e.desde === n.id && (e.tipo === "tabular" || e.tipo === "fusion")).map(e => li(e, true)));
+  lista("Es referenciado por", vis.filter(e => e.hacia === n.id && (e.tipo === "tabular" || e.tipo === "fusion")).map(e => li(e, false)));
+  lista("Espacial", vis.filter(e => e.tipo === "espacial" || e.tipo === "espacial-par").map(e => li(e, e.desde === n.id)));
+  const com = G.comparten[estado.modo] || {};
+  const comparte = [];
+  for (const [tabla, fuentes] of Object.entries(com)) if (fuentes.includes(n.id)) comparte.push([tabla, fuentes.filter(f => f !== n.id)]);
+  if (comparte.length) {
+    t.append(el("h3", {}, [document.createTextNode("Relacionado por tabla común")]));
+    const ul = el("ul");
+    for (const [tabla, otros] of comparte) ul.append(el("li", {}, [document.createTextNode(`${nodo[tabla].etiqueta}: ${otros.length} datasets más` + (otros.length <= 6 ? " (" + otros.map(o => nodo[o].etiqueta).join(", ") + ")" : ""))]));
+    t.append(ul);
+  }
+  if (n.notebook) t.append(el("p", {}, [el("a", { href: n.notebook, target: "_blank", rel: "noopener" }, [document.createTextNode("Notebook del dataset")])]));
+}
+
+function dibujarTabla(aristas) {
+  const c = $("#vista-tabla"); c.replaceChildren();
+  const filas = aristas.filter(e => estado.vista === "tabla" || true);
+  const tb = el("table"); const th = el("tr");
+  ["Tipo", "Estado", "Desde", "Hacia", "Columnas / predicado", "Calidad", "Issues", "Advertencia"].forEach(h => th.append(el("th", {}, [document.createTextNode(h)])));
+  tb.append(el("thead", {}, [th])); const body = el("tbody");
+  const orden = { tabular: 0, fusion: 1, espacial: 2, "espacial-par": 3 };
+  filas.slice().sort((a, b) => orden[a.tipo] - orden[b.tipo] || nodo[a.desde].etiqueta.localeCompare(nodo[b.desde].etiqueta)).forEach(e => {
+    const tr = el("tr");
+    [e.tipo, e.estado, nodo[e.desde].etiqueta, nodo[e.hacia].etiqueta, e.predicado || etiquetaCols(e), e.calidad, (e.issues || []).join(" "), e.advertencia || ""].forEach(v => tr.append(el("td", {}, [document.createTextNode(v)])));
+    body.append(tr);
+  });
+  tb.append(body); c.append(el("p", { class: "mut" }, [document.createTextNode(`${filas.length} relaciones visibles con las capas elegidas.`)]), tb);
+}
+
+function cadenaChips() {
+  const c = $("#chips");
+  G.grupos.forEach(g => {
+    const b = el("button", { class: "chip", "aria-pressed": "true", type: "button" }, [el("i", { style: `background:${colorGrupo[g.id]}` }), document.createTextNode(g.titulo)]);
+    b.addEventListener("click", () => { if (estado.grupos.has(g.id)) estado.grupos.delete(g.id); else estado.grupos.add(g.id); b.setAttribute("aria-pressed", estado.grupos.has(g.id)); dibujar(); });
+    c.append(b);
+  });
+}
+
+// zoom y arrastre (la rueda sola no se captura: la página sigue haciendo scroll)
+const svg = $("#svg"), vista = $("#vista"); let tf = { x: 0, y: 0, k: 1 };
+const aplicar = () => vista.setAttribute("transform", `translate(${tf.x},${tf.y}) scale(${tf.k})`);
+const zoom = f => { tf.x = 600 - (600 - tf.x) * f; tf.y = 400 - (400 - tf.y) * f; tf.k *= f; aplicar(); };
+$("#z-mas").onclick = () => zoom(1.25); $("#z-menos").onclick = () => zoom(0.8); $("#z-ini").onclick = () => { tf = { x: 0, y: 0, k: 1 }; aplicar(); };
+svg.addEventListener("wheel", ev => { if (ev.ctrlKey) { ev.preventDefault(); zoom(ev.deltaY < 0 ? 1.1 : 0.9); } }, { passive: false });
+let arr = null;
+svg.addEventListener("pointerdown", ev => { if (ev.target.closest(".nodo")) return; arr = { x: ev.clientX, y: ev.clientY, tx: tf.x, ty: tf.y }; svg.classList.add("arrastrando"); svg.setPointerCapture(ev.pointerId); });
+svg.addEventListener("pointermove", ev => { if (!arr) return; const esc = 1200 / svg.getBoundingClientRect().width; tf.x = arr.tx + (ev.clientX - arr.x) * esc; tf.y = arr.ty + (ev.clientY - arr.y) * esc; aplicar(); });
+svg.addEventListener("pointerup", () => { arr = null; svg.classList.remove("arrastrando"); });
+svg.addEventListener("click", () => { if (estado.sel) { estado.sel = null; escribirHash(); dibujar(); tarjeta(); } });
+
+function sincronizarControles() {
+  document.querySelectorAll("input[name=estado]").forEach(r => r.checked = r.value === estado.modo);
+  $("#c-esp").checked = estado.esp; $("#c-par").checked = estado.par;
+  document.body.classList.toggle("tabla", estado.vista === "tabla");
+  $("#v-mapa").setAttribute("aria-pressed", estado.vista === "mapa"); $("#v-tabla").setAttribute("aria-pressed", estado.vista === "tabla");
+}
+document.querySelectorAll("input[name=estado]").forEach(r => r.addEventListener("change", () => { estado.modo = r.value; escribirHash(); dibujar(); tarjeta(); }));
+$("#c-esp").addEventListener("change", e => { estado.esp = e.target.checked; escribirHash(); dibujar(); tarjeta(); });
+$("#c-par").addEventListener("change", e => { estado.par = e.target.checked; escribirHash(); dibujar(); tarjeta(); });
+$("#buscar").addEventListener("input", e => { estado.q = e.target.value; dibujar(); });
+$("#v-mapa").onclick = () => { estado.vista = "mapa"; sincronizarControles(); escribirHash(); };
+$("#v-tabla").onclick = () => { estado.vista = "tabla"; sincronizarControles(); escribirHash(); };
+
+leerHash(); cadenaChips(); sincronizarControles(); dibujar(); tarjeta();
+</script>
+</body>
+</html>

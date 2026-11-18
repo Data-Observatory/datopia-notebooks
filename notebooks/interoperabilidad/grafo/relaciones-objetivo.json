@@ -1,0 +1,103 @@
+{
+  "descripcion": "Relaciones entre datasets que el grafo dibuja como 'objetivo': aún no están declaradas o publicadas, pero se asumen cerradas. Se muestran con línea punteada. Un símbolo de advertencia marca las que tienen un problema conocido; la relación teórica existe de todos modos.",
+  "supuestos": [
+    "#56: códigos de comuna, provincia y región con los nombres oficiales cut_com, cut_prov y cut_reg en todos los datasets",
+    "#57: sinca estaciones publica cut_com, cut_prov y cut_reg",
+    "#58: establecimientos de salud publica geometría Point (más lon y lat)",
+    "#59: division-territorial v2 se fusiona en v1; v1 queda con geometría"
+  ],
+  "renombres_codigos": {"cod_comuna": "cut_com", "cod_provincia": "cut_prov", "cod_region": "cut_reg"},
+  "tabla_geografica": "geografia_social_cl_subdere_division_territorial_v1",
+  "fusiones": [
+    {"desde": "geografia_social_cl_subdere_division_territorial_v2", "hacia": "geografia_social_cl_subdere_division_territorial_v1", "issue": "#59"}
+  ],
+  "geometrias": [
+    {"dataset": "geografia_social_cl_subdere_division_territorial_v1", "geometry_type": "MultiPolygon", "issue": "#59"},
+    {"dataset": "salud_cl_deis_establecimientos_salud_v1", "geometry_type": "Point", "issue": "#58"}
+  ],
+  "relaciones": [
+    {
+      "id": "obj.establecimientos.comuna",
+      "desde": "salud_cl_deis_establecimientos_salud_v1", "hacia": "geografia_social_cl_subdere_division_territorial_v1",
+      "columnas_desde": ["cut_com"], "columnas_hacia": ["cut_com"], "columnas_desde_hoy": ["cod_comuna"],
+      "issues": ["#56", "#59"], "vigencia": "establecimientos: fecha_apertura a fecha_cierre; comunas: snapshot_date",
+      "nota": "Hoy el dataset trae cod_comuna sin declarar la relación."
+    },
+    {
+      "id": "obj.sinca-estaciones.comuna",
+      "desde": "medio_fisico_cl_sinca_estaciones_v1", "hacia": "geografia_social_cl_subdere_division_territorial_v1",
+      "columnas_desde": ["cut_com"], "columnas_hacia": ["cut_com"], "columnas_desde_hoy": [],
+      "issues": ["#57", "#59"], "vigencia": "estaciones: fecha_inicio a fecha_fin; comunas: snapshot_date",
+      "nota": "La columna se rellena con un cruce punto-en-polígono al actualizar las estaciones."
+    },
+    {
+      "id": "obj.cambios.comuna",
+      "desde": "geografia_social_cl_subdere_division_territorial_cambios_v1", "hacia": "geografia_social_cl_subdere_division_territorial_v1",
+      "columnas_desde": ["cut_anterior", "cut_nuevo"], "columnas_hacia": ["cut_com"],
+      "issues": ["#59"], "vigencia": "fecha_vigencia de la norma",
+      "nota": "Cada cambio legal apunta a la comuna antes y después de la ley."
+    },
+    {
+      "id": "obj.rem.codigos-rem",
+      "desde": "salud_cl_deis_resumen_estadistico_mensual_v1", "hacia": "salud_cl_deis_codigos_rem_v1",
+      "columnas_desde": ["year", "tipo_serie", "cod_prestacion", "cod_col_numerica"], "columnas_hacia": ["year", "tipo_serie", "cod_prestacion", "cod_col_numerica"],
+      "issues": ["#46"],
+      "advertencia": "En la serie BS (2017-2026) cod_prestacion pierde el cero inicial en los hechos y no cruza con codigos-rem (issue #46). El resto de las series cruza.",
+      "nota": "El diccionario no declara llave primaria, por eso la relación no está en el modelo público."
+    },
+    {
+      "id": "obj.censo-l.preguntas",
+      "desde": "sociologia_cl_ine_censos_poblacionales_v1l", "hacia": "sociologia_cl_ine_preguntas_respuestas_censo_v1",
+      "columnas_desde": ["year", "tipo_registro", "pregunta", "respuesta"], "columnas_hacia": ["year", "tipo_registro", "num_pregunta", "num_respuesta"],
+      "issues": ["#47"],
+      "advertencia": "El emparejamiento exacto de columnas (pregunta/respuesta contra num_pregunta/num_respuesta) falta verificarlo, y el censo 2017 tiene filas con respuesta nula (issue #47).",
+      "nota": "Lleva de cada respuesta codificada a su enunciado y valor."
+    },
+    {
+      "id": "obj.stop-times.stops",
+      "desde": "transporte_cl_dtpm_gtfs_stop_times_v1", "hacia": "transporte_cl_dtpm_gtfs_stops_v1",
+      "columnas_desde": ["feed_id", "stop_id"], "columnas_hacia": ["feed_id", "stop_id"],
+      "issues": [], "vigencia": "feed_id",
+      "nota": "stops no declara llave primaria, por eso la relación no está en el modelo público."
+    },
+    {
+      "id": "obj.pathways.stops",
+      "desde": "transporte_cl_dtpm_gtfs_pathways_v1", "hacia": "transporte_cl_dtpm_gtfs_stops_v1",
+      "columnas_desde": ["feed_id", "from_stop_id", "to_stop_id"], "columnas_hacia": ["feed_id", "stop_id"],
+      "issues": [], "vigencia": "feed_id", "nota": "Origen y destino de cada pasillo son paraderos."
+    },
+    {
+      "id": "obj.transfers.stops",
+      "desde": "transporte_cl_dtpm_gtfs_transfers_v1", "hacia": "transporte_cl_dtpm_gtfs_stops_v1",
+      "columnas_desde": ["feed_id", "from_stop_id", "to_stop_id"], "columnas_hacia": ["feed_id", "stop_id"],
+      "issues": [], "vigencia": "feed_id", "nota": "Origen y destino de cada transbordo son paraderos."
+    },
+    {
+      "id": "obj.trips.calendar",
+      "desde": "transporte_cl_dtpm_gtfs_trips_v1", "hacia": "transporte_cl_dtpm_gtfs_calendar_v1",
+      "columnas_desde": ["feed_id", "service_id"], "columnas_hacia": ["feed_id", "service_id"],
+      "issues": [], "vigencia": "feed_id", "nota": "Qué días circula cada viaje."
+    },
+    {
+      "id": "obj.estaciones-variables.estaciones",
+      "desde": "medio_fisico_cl_sinca_estaciones_variables_v1", "hacia": "medio_fisico_cl_sinca_estaciones_v1",
+      "columnas_desde": ["estacion_id"], "columnas_hacia": ["estacion_id"],
+      "issues": [], "vigencia": "estaciones: fecha_inicio a fecha_fin",
+      "nota": "estaciones tiene historial (llave estacion_id + fecha_inicio), por eso no se declaró."
+    },
+    {
+      "id": "obj.posiciones.vigencia",
+      "desde": "transporte_cl_red_movilidad_posicion_diaria_v1", "hacia": "transporte_cl_dtpm_gtfs_vigencia_v1",
+      "columnas_desde": ["year", "month", "day"], "columnas_hacia": ["fecha_servicio"],
+      "issues": [], "vigencia": "fecha de servicio (día de Santiago)",
+      "nota": "La fecha de la posición, en hora de Santiago, elige el feed GTFS vigente; de ahí se llega a rutas y recorridos."
+    },
+    {
+      "id": "obj.posiciones.rutas",
+      "desde": "transporte_cl_red_movilidad_posicion_diaria_v1", "hacia": "transporte_cl_dtpm_gtfs_routes_v1",
+      "columnas_desde": ["bus_route_assigned"], "columnas_hacia": ["route_short_name"],
+      "issues": [], "vigencia": "feed_id vigente en la fecha",
+      "advertencia": "Que bus_route_assigned corresponda a route_short_name no está verificado."
+    }
+  ]
+}
