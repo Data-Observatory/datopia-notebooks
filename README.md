@@ -23,6 +23,7 @@ sin infraestructura propia. Compatible con Google Colab y entornos locales.
 | Salud | DEIS — Resumen Estadístico Mensual (REM) | 2009 → hoy (mensual, red pública) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/salud/deis-rem/demo.ipynb) |
 | Sociología | INE — Censos de Población y Vivienda | Censos 2017 y 2024 (microdatos por vivienda, hogar y persona) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/sociologia/ine/demo.ipynb) |
 | Geografía social | SUBDERE — División Político Administrativa (límites comunales) | Fotos de 2000-05-08 a 2018-09-06 (346 comunas, 16 regiones) | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/geografia-social/subdere/demo.ipynb) |
+| Interoperabilidad | Aire y salud — demo de interoperabilidad (SINCA × DEIS REM × INE Censos × SUBDERE) | Aire: 1971 → hoy (diario). Salud: 2009 → hoy (mensual). Población: censo 2024 | [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Data-Observatory/datopia-notebooks/blob/main/notebooks/interoperabilidad/aire-salud/demo.ipynb) |
 
 El catálogo de notebooks está disponible en formato JSON (ES/EN) en
 [`index.json`](index.json), también en

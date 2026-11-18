@@ -1,0 +1,14 @@
+.reveal { font-size: 30px; }
+.reveal h1, .reveal h2 { font-weight: 600; }
+.reveal h2 { font-size: 1.5em; margin-bottom: 0.4em; }
+.reveal pre { width: 100%; box-shadow: none; font-size: 0.6em; }
+.reveal pre.grande { font-size: 0.8em; }
+.reveal pre.compacto { font-size: 0.5em; }
+.reveal pre code { max-height: none; }
+.reveal table { font-size: 0.8em; }
+.reveal table th { text-align: left; }
+.reveal table td, .reveal table th { padding: 0.25em 0.6em; }
+.reveal .cifra { font-size: 2.4em; font-weight: 700; line-height: 1.1; }
+.reveal .cifra-texto { font-size: 0.8em; color: #555; }
+.reveal .nota { font-size: 0.7em; color: #555; }
+.reveal img { max-height: 500px; }

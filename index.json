@@ -1,5 +1,24 @@
 [
   {
+    "id": "aire-salud",
+    "path": "notebooks/interoperabilidad/aire-salud/demo.ipynb",
+    "format": "Parquet",
+    "es": {
+      "name": "Aire y salud — demo de interoperabilidad",
+      "category": "Interoperabilidad",
+      "source": "SINCA × DEIS REM × INE Censos × SUBDERE",
+      "coverage": "Aire: 1971 → hoy (diario). Salud: 2009 → hoy (mensual). Población: censo 2024.",
+      "description": "Demostración del concepto de interoperabilidad: una sola pregunta (¿suben las consultas respiratorias de tu comuna cuando sube el material particulado?) respondida con una consulta que une cuatro dominios — calidad del aire, salud pública, censos de población y división territorial — mediante cuatro tipos de unión: espacial, territorial, semántica y temporal."
+    },
+    "en": {
+      "name": "Air and health — an interoperability demo",
+      "category": "Interoperability",
+      "source": "SINCA × DEIS REM × INE Censuses × SUBDERE",
+      "coverage": "Air: 1971 → today (daily). Health: 2009 → today (monthly). Population: 2024 census.",
+      "description": "A demonstration of the interoperability concept: one question (do respiratory consults in your commune rise when particulate matter does?) answered by a single query that joins four domains — air quality, public health, population censuses and territorial division — through four kinds of join: spatial, territorial, semantic and temporal."
+    }
+  },
+  {
     "id": "deis-rem",
     "path": "notebooks/salud/deis-rem/demo.ipynb",
     "format": "Parquet",

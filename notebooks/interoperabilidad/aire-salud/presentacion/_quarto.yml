@@ -1,0 +1,2 @@
+project:
+  post-render: quitar_fuentes.py

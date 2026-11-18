@@ -1,0 +1,71 @@
+<script src="libs/vega.min.js"></script>
+<script src="libs/vega-lite.min.js"></script>
+<script src="libs/vega-embed.min.js"></script>
+<style>
+  .vl { display: flex; justify-content: center; }
+  .vl .vega-embed { padding: 0; }
+  .vl-tip { position: fixed; z-index: 9999; pointer-events: none; background: #fff; color: #0b0b0b; border: 1px solid #c9c8c2;
+            border-radius: 4px; padding: 6px 9px; font: 14px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+            box-shadow: 0 2px 8px rgba(0,0,0,.15); display: none; }
+  .vl-tip b { font-weight: 600; }
+  .vl-tip span { color: #52514e; }
+</style>
+<script>
+(function () {
+  // Formatos en español: coma decimal, punto de miles, meses y días.
+  var formatoNumero = { decimal: ",", thousands: ".", grouping: [3], currency: ["$", ""] };
+  var formatoFecha = {
+    dateTime: "%A, %e de %B de %Y, %X", date: "%d/%m/%Y", time: "%H:%M:%S", periods: ["AM", "PM"],
+    days: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
+    shortDays: ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"],
+    months: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
+    shortMonths: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+  };
+
+  // Cuadro de texto al pasar el cursor. Usa la posición real del mouse (ver `corregirEscala`).
+  var real = { x: 0, y: 0 };
+  var caja = null;
+  function tooltip(handler, event, item, valor) {
+    if (!caja) { caja = document.createElement("div"); caja.className = "vl-tip"; document.body.appendChild(caja); }
+    if (valor == null || valor === "") { caja.style.display = "none"; return; }
+    var filas = typeof valor === "object" ? Object.keys(valor).map(function (k) {
+      return "<div><span>" + k + ":</span> <b>" + valor[k] + "</b></div>"; }).join("") : String(valor);
+    caja.innerHTML = filas;
+    caja.style.display = "block";
+    var izq = real.x + 16, arriba = real.y + 16;
+    if (izq + caja.offsetWidth > window.innerWidth - 8) izq = real.x - caja.offsetWidth - 16;
+    if (arriba + caja.offsetHeight > window.innerHeight - 8) arriba = real.y - caja.offsetHeight - 16;
+    caja.style.left = izq + "px"; caja.style.top = arriba + "px";
+  }
+
+  // Reveal escala las diapositivas con CSS; Vega no lo sabe y calcula mal la posición del cursor.
+  // Se reenvía cada evento del mouse con las coordenadas ya sin escala.
+  var EVENTOS = ["pointermove", "pointerover", "pointerout", "pointerdown", "pointerup", "mousemove", "mouseover", "mouseout", "mousedown", "mouseup", "click"];
+  function corregirEscala(contenedor) {
+    var reenviando = false;
+    EVENTOS.forEach(function (tipo) {
+      contenedor.addEventListener(tipo, function (e) {
+        if (reenviando || !e.isTrusted) return;
+        real.x = e.clientX; real.y = e.clientY;
+        var r = contenedor.getBoundingClientRect(), s = r.width / contenedor.offsetWidth;
+        if (!isFinite(s) || Math.abs(s - 1) < 0.005) return;
+        e.stopImmediatePropagation();
+        var Clase = tipo.indexOf("pointer") === 0 ? PointerEvent : MouseEvent;
+        var copia = new Clase(tipo, { bubbles: true, cancelable: true, view: window, pointerId: e.pointerId, pointerType: e.pointerType, isPrimary: e.isPrimary,
+          clientX: r.left + (e.clientX - r.left) / s, clientY: r.top + (e.clientY - r.top) / s, screenX: e.screenX, screenY: e.screenY, buttons: e.buttons, relatedTarget: e.relatedTarget });
+        reenviando = true;
+        try { e.target.dispatchEvent(copia); } finally { reenviando = false; }
+      }, true);
+    });
+  }
+
+  function iniciar() {
+    document.querySelectorAll(".vl").forEach(function (div) {
+      var especificacion = JSON.parse(div.getAttribute("data-spec"));
+      corregirEscala(div);
+      vegaEmbed(div, especificacion, { actions: false, renderer: "svg", tooltip: tooltip, formatLocale: formatoNumero, timeFormatLocale: formatoFecha });
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar); else iniciar();
+})();
+</script>

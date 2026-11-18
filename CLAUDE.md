@@ -37,6 +37,8 @@ do-datopia-notebooks/
 │   │   └── ine/
 │   ├── geografia-social/
 │   │   └── subdere/
+│   ├── interoperabilidad/        ← demo que une 4 fuentes (sin datos propios)
+│   │   └── aire-salud/
 │   └── <categoria>/            ← nuevas categorías se agregan aquí
 │       └── <fuente>/
 │           └── demo.ipynb
@@ -44,6 +46,8 @@ do-datopia-notebooks/
 ├── scripts/
 └── docs/
 ```
+
+Guía para agentes: ver `AGENTS.md` (y `<dir>/AGENTS.md` donde exista).
 
 Cada dataset vive en `notebooks/<categoria>/<fuente>/`. Al agregar un nuevo dataset:
 1. Crear la carpeta `notebooks/<categoria>/<fuente>/`.
@@ -325,6 +329,32 @@ Trampas:
 - La tabla de cambios escribe los nombres como la ley (con erratas); los nombres oficiales salen de las fotos.
 - Antártica Chilena (`12202`) sin geometría ni superficie.
 - `ST_Transform(geometry, 'EPSG:4326', 'EPSG:32719', always_xy := true)` (sin `always_xy` los ejes se invierten).
+
+### interoperabilidad / aire-salud
+
+**No es un dataset propio**: es la demo de interoperabilidad del lakehouse (notebook `demo.ipynb` +
+`meta.json`, sin `stats.json` porque `coverage` no usa `{campos}`). Responde "¿suben las consultas
+respiratorias de una comuna cuando sube el MP2,5?" uniendo los otros cuatro dominios:
+
+- **SINCA**: `tipo=medicion-diaria` (MP2,5 = `variable_fk` 13, promedio diario = `periodicidad_fk` 1) ×
+  `tipo=estaciones` (`lon`/`lat`).
+- **DEIS**: hechos × `establecimientos-salud` (`cod_comuna`) × `codigos-rem` (prestaciones respiratorias
+  `03020201` SBO, `03020301` neumonía, `03020401` otras, `03020402` asma; `col01` = total ambos sexos).
+- **INE**: censo 2024 (`version=v1w`), población comunal = `SUM(total_personas)` de `viviendas` filtrado por `cod_comuna`
+  (suma lo mismo que contar `personas` ⨝ `viviendas`, verificado en La Florida: 374 836, y evita leer `personas`).
+- **SUBDERE**: foto base `2018-09-06`, `ST_Contains(polígono, ST_Point(lon, lat))` para asignar estación → comuna.
+
+Trampas:
+- `ST_Intersects` sobre la geometría WKB de SINCA no calza; usar `ST_Point(e.lon, e.lat)` con `ST_Contains`.
+- Los nombres de comuna difieren entre fuentes: resolver nombre → CUT contra `division-territorial-censal`
+  del INE (normalizando tildes/minúsculas), nunca hardcodear (`13109` es La Cisterna, no La Florida).
+- El REM publica con ~1 año de rezago: la ventana común aire × salud termina el año calendario anterior.
+- Unir al diccionario DEIS sin incluir `cod_col_numerica` duplica cada hecho × decenas de columnas.
+- El nombre de un código REM puede cambiar entre años (`03020402`: «asma» en 2022, «exacerbación asma» desde 2023): agrupar
+  por `cod_prestacion`, no por nombre (si no, la serie se parte). Inicio de 2022 con consultas respiratorias ~2× lo normal
+  (rebrote COVID): la demo usa 2023–2024. Leer hechos del REM con lista de `year=AAAA/` (no glob completo) y filtrar
+  establecimientos por semi-join contra `establecimientos-salud.cod_comuna` (con cero: `09101`).
+- Comuna sin estación PM2,5: fallback a la más cercana (haversine al centroide del polígono).
 
 ---
 

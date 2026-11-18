@@ -1,0 +1,17 @@
+{
+  "comuna": "La Florida",
+  "cut": "13110",
+  "ventana": [
+    2023,
+    2024
+  ],
+  "meses": 24,
+  "habitantes": 374836,
+  "mediciones": 64912,
+  "estaciones_pais": 121,
+  "mp25_invierno": 34.37217741935484,
+  "mp25_verano": 17.023101064675036,
+  "consultas_invierno": 4.92515393398713,
+  "consultas_verano": 2.4806404223002416,
+  "correlacion": 0.5529814636800952
+}

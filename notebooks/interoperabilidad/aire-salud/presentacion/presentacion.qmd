@@ -1,0 +1,244 @@
+---
+title: "Calidad del aire y consultas respiratorias en La Florida"
+subtitle: "Demostración de interoperabilidad con el Datopia Lakehouse"
+author: "Data Observatory"
+lang: es
+format:
+  revealjs:
+    theme: [default, tema.scss]
+    slide-number: true
+    width: 1280
+    height: 720
+    embed-resources: true  # un solo archivo; quitar_fuentes.py lo adelgaza tras el render
+    fig-format: svg
+    css: estilo.css
+    include-in-header: encabezado.html
+    html-math-method: plain
+    code-copy: false
+    code-line-numbers: false
+    preview-links: false
+jupyter: python3
+execute:
+  echo: false
+  warning: false
+---
+
+```{python}
+#| include: false
+import json
+import pandas as pd
+import matplotlib.pyplot as plt
+import graficos as g
+import interactivos as iv
+from graficos import coma, miles
+
+def leer(nombre):
+    return json.load(open(f"resultados/{nombre}.json"))
+
+resumen = leer("resumen")
+tiempos = leer("tiempos")
+union = pd.read_csv("resultados/union.csv", parse_dates=["mes"])
+estaciones = pd.read_csv("resultados/estaciones_rm.csv", dtype={"cut_com": str})
+poligonos = pd.read_csv("resultados/mapa_poligonos.csv", dtype={"cut_com": str})
+poligono_comuna = pd.read_csv("resultados/poligono_comuna.csv")
+aire_estacion = pd.read_csv("resultados/aire_estacion.csv")
+puntos = pd.read_csv("resultados/mapa_puntos.csv")
+antes_despues = pd.read_csv("resultados/antes_despues.csv", dtype={"codigo_publicado": str})
+total_segundos = sum(tiempos.values())
+```
+
+## La pregunta
+
+Cuando empeora el aire en una comuna, ¿suben las consultas respiratorias en su red de salud?
+
+Caso: **La Florida, 2023 a 2024**.
+
+Responderla requiere datos de cuatro instituciones que publican por separado:
+
+| Institución | Dato necesario |
+|---|---|
+| MMA (SINCA) | partículas finas (MP2,5) medidas por estación, por día |
+| MINSAL (DEIS, REM) | consultas respiratorias por establecimiento y mes |
+| INE (Censo 2024) | habitantes de la comuna |
+| SUBDERE | límites oficiales de las comunas |
+
+## Comparación: silos de datos y datos estructurados
+
+```{python}
+g.silos_vs_lakehouse(total_segundos)
+```
+
+## Qué hay que unir
+
+```{python}
+g.diagrama_uniones()
+```
+
+## Paso 1. ¿Dónde? Ubicar cada estación en su comuna
+
+```{.sql .grande}
+{{< include consultas/01_estaciones.sql >}}
+```
+
+## Resultado del paso 1
+
+```{python}
+#| output: asis
+n_comunas = estaciones.comuna.nunique()
+print(f"**{resumen['estaciones_pais']} estaciones** del país quedaron asignadas a su comuna por geometría, en {tiempos['Ubicar estaciones en comunas (SINCA, SUBDERE)']:.0f} s. En la Región Metropolitana, {len(estaciones)} estaciones en {n_comunas} comunas.")
+```
+
+```{python}
+g.mapa_estaciones(estaciones, poligonos, poligono_comuna, resumen["cut"])
+```
+
+## Paso 2. Aire: MP2,5 diario
+
+```{.sql .grande}
+{{< include consultas/02_aire.sql >}}
+```
+
+## Resultado del paso 2
+
+```{python}
+#| output: asis
+print(f"**{miles(resumen['mediciones'])} mediciones diarias** leídas directo del Lakehouse en {tiempos['Leer MP2,5 diario (SINCA)']:.0f} s. El MP2,5 sube en los meses de invierno (zona gris).")
+```
+
+```{python}
+#| output: asis
+iv.aire_diario(aire_estacion)
+```
+
+## Paso 3. Salud: consultas respiratorias de la comuna
+
+El REM publica códigos, no nombres. La consulta trae las cuatro prestaciones respiratorias de los establecimientos de La Florida y el diccionario que las traduce.
+
+```{.sql .compacto}
+{{< include consultas/03_salud.sql >}}
+```
+
+## Resultado del paso 3
+
+```{python}
+#| output: asis
+print(f"Consultas respiratorias de los establecimientos de La Florida, por mes y enfermedad. Aumentan entre otoño e invierno. Lectura: {tiempos['Leer consultas respiratorias y diccionario (DEIS)']:.0f} s.")
+```
+
+```{python}
+g.salud_apilado(union)
+```
+
+## El diccionario: de código a nombre
+
+```{.sql .grande}
+{{< include consultas/03b_diccionario.sql >}}
+```
+
+```{python}
+g.diccionario(antes_despues)
+```
+
+::: {.nota}
+El nombre de un código puede cambiar entre años (03020402 era «asma» en 2022 y es «exacerbación asma» desde 2023). La consulta usa el nombre más reciente.
+:::
+
+## Paso 4. ¿De quién? Población de la comuna
+
+```{.sql .grande}
+{{< include consultas/04_poblacion.sql >}}
+```
+
+```{python}
+julio = union[union.mes == "2024-07-01"].consultas.sum()
+g.ecuacion_tasa(julio, resumen["habitantes"], "julio 2024")
+```
+
+::: {.nota}
+Con la población, comunas de distinto tamaño se pueden comparar. Censo 2024, lectura en 2 s.
+:::
+
+## Paso 5. ¿Cuándo? La unión de las cuatro fuentes
+
+```{.sql}
+{{< include consultas/05_union.sql >}}
+```
+
+## Resultado del paso 5
+
+```{python}
+#| output: asis
+print("Un panel por magnitud, con el mismo eje de tiempo. Cuando sube el MP2,5 (arriba), suben las consultas por habitante (abajo).")
+```
+
+```{python}
+#| output: asis
+iv.union_paneles(union)
+```
+
+## Respuesta para La Florida, 2023 a 2024
+
+```{python}
+g.invierno_verano(resumen)
+```
+
+## Relación mes a mes
+
+```{python}
+g.dispersion(union, resumen["correlacion"])
+```
+
+::: {.nota}
+Cada punto es un mes. Las dos series coinciden en el calendario. Eso no prueba que una cause la otra: los virus respiratorios también tienen su temporada.
+:::
+
+## El mismo dato en el territorio
+
+```{.sql .grande}
+{{< include consultas/06_mapa.sql >}}
+```
+
+## Resultado: MP2,5 de invierno 2024 por estación
+
+```{python}
+#| output: asis
+iv.mapa_invierno(puntos, poligonos, resumen["cut"])
+```
+
+## Tiempos de esta demostración
+
+```{python}
+#| output: asis
+print(f"**{total_segundos:.0f} segundos** en total, leyendo directo del Lakehouse desde un computador personal. Varía con la red.")
+```
+
+```{python}
+g.tiempos(tiempos)
+```
+
+::: {.content-hidden when-format="revealjs"}
+<!-- Lámina oculta: para mostrarla, borrar este bloque (las líneas ::: y este comentario). -->
+
+## Límites de la lectura
+
+- Las dos series coinciden en el calendario; no hay análisis causal.
+- Las consultas se cuentan donde está el establecimiento (red pública que reporta al REM) y la población es la que vive en la comuna. La tasa es aproximada.
+- El REM se publica con cerca de un año de rezago.
+- Se usa una ventana 2023 a 2024. A inicios de 2022 las consultas respiratorias fueron cerca del doble de lo habitual (probable efecto del COVID), lo que distorsiona la comparación invierno y verano.
+- Se usa la única estación ubicada dentro de La Florida. Una comuna sin estación requeriría elegir otra (por ejemplo la más cercana).
+:::
+
+## Otras preguntas con las mismas tablas
+
+- Comparar comunas con más y menos MP2,5 en el mismo invierno.
+- Separar las consultas por edad y sexo (el REM trae decenas de cortes).
+- Repetir con otra comuna: cambiar el código `13110` y la estación.
+- Cruzar con otros dominios del lakehouse, por ejemplo transporte público.
+
+## Fuentes
+
+- MMA, Sistema de Información Nacional de Calidad del Aire (SINCA).
+- MINSAL, DEIS, Resúmenes Estadísticos Mensuales (REM) y directorio de establecimientos.
+- INE, Censo 2024.
+- SUBDERE, División Político-Administrativa.
+- Datos servidos por el Datopia Lakehouse, Data Observatory. Código y notebook: `notebooks/interoperabilidad/aire-salud/`.
