@@ -19,6 +19,25 @@
     }
   },
   {
+    "id": "deis-atenciones-urgencia",
+    "path": "notebooks/salud/deis-atenciones-urgencia/demo.ipynb",
+    "format": "Parquet",
+    "es": {
+      "name": "DEIS Atenciones de Urgencia",
+      "category": "Salud",
+      "source": "DEIS — Atenciones de Urgencia",
+      "coverage": "2008 → hoy (diario, red pública)",
+      "description": "Atenciones de urgencia diarias de la red pública de salud por establecimiento, causa y grupo de edad, con su diccionario de causas."
+    },
+    "en": {
+      "name": "DEIS Emergency-Care Visits",
+      "category": "Health",
+      "source": "DEIS — Emergency-Care Visits",
+      "coverage": "2008 → today (daily, public network)",
+      "description": "Daily emergency-care visits of Chile's public health network by facility, cause and age group, with its causes lookup."
+    }
+  },
+  {
     "id": "deis-rem",
     "path": "notebooks/salud/deis-rem/demo.ipynb",
     "format": "Parquet",

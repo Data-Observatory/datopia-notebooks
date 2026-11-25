@@ -124,6 +124,25 @@ def stats_deis_rem(con, bucket):
     return {"anio_inicio": first_year, "anio_fin": last_year, "anios_con_datos": n_years}
 
 
+def stats_deis_atenciones_urgencia(con, bucket):
+    base = (
+        f"s3://{bucket}/categoria=salud/pais=cl/fuente=deis"
+        "/tipo=atenciones-urgencia/version=v1"
+    )
+
+    # Primera y última fecha: las escribe el publisher en manifest.json (no lee el Parquet)
+    first_date, last_date = con.execute(f"""
+        SELECT first_date::VARCHAR, last_date::VARCHAR
+        FROM read_json('{base}/manifest.json')
+    """).fetchone()
+
+    return {
+        "anio_inicio": int(first_date[:4]),
+        "fecha_inicio": first_date[:10],
+        "fecha_fin": last_date[:10],
+    }
+
+
 def stats_ine(con, bucket):
     base = (
         f"s3://{bucket}/categoria=sociologia/pais=cl/fuente=ine"
@@ -207,6 +226,7 @@ def stats_dtpm_posiciones(con, bucket):
 DATASETS = {
     "sinca": ("notebooks/medio-fisico/sinca", stats_sinca),
     "deis-rem": ("notebooks/salud/deis-rem", stats_deis_rem),
+    "deis-atenciones-urgencia": ("notebooks/salud/deis-atenciones-urgencia", stats_deis_atenciones_urgencia),
     "dtpm": ("notebooks/transporte/dtpm", stats_dtpm_posiciones),
     "ine": ("notebooks/sociologia/ine", stats_ine),
 }

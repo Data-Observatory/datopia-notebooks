@@ -32,7 +32,8 @@ do-datopia-notebooks/
 │   ├── medio-fisico/
 │   │   └── sinca/
 │   ├── salud/
-│   │   └── deis-rem/
+│   │   ├── deis-rem/
+│   │   └── deis-atenciones-urgencia/
 │   ├── sociologia/
 │   │   └── ine/
 │   ├── geografia-social/
@@ -262,7 +263,7 @@ un subdirectorio de los hechos. Hermanos: `codigos-rem-prestaciones`, `codigos-r
 **Cobertura:** 2009 → 2026 (mensual)
 **Escala:** ~1 930 M filas en total · 55–240 MB por año
 
-**Columnas (hechos):** `year`, `mes`, `tipo_serie` (`a`/`bs`/`bm`/`d`/`p`), `id_establecimiento`,
+**Columnas (hechos):** `year`, `month`, `tipo_serie` (`a`/`bs`/`bm`/`d`/`p`), `id_establecimiento`,
 `cod_prestacion`, `cod_col_numerica`, `cantidad`, `flags_procesamiento`.
 
 **`codigos-rem`** traduce los códigos por año: `cod_hoja`/`nombre_hoja` → `nombre_seccion` →
@@ -272,6 +273,32 @@ Unir por (`year`, `cod_prestacion`, `cod_col_numerica`).
 
 - Buscar por texto en `codigos-rem` y bajar por la jerarquía hoja → sección → prestación → columna.
 - Filtrar siempre por `year` y `cod_prestacion`; `SET threads=128` acelera la lectura remota.
+
+### salud / deis-atenciones-urgencia
+
+**Ruta S3 (hechos):**
+```
+s3://do-datopia/categoria=salud/pais=cl/fuente=deis/tipo=atenciones-urgencia/version=v1/
+```
+
+**Sin particiones:** todos los años en `partNNNNN.parquet` (hoy uno, ~110 MB), ordenados por `fecha`,
+`id_establecimiento`, `id_causa`, `rango_etario`; leer con el glob `part*.parquet`. Filtrar siempre por un rango de
+`fecha` (DuckDB salta los bloques de otras fechas). Filas por año: `parquet_metadata` (cada mes cierra su row group).
+**Diccionario:** dataset hermano `tipo=causas-atencion-urgencia/version=v1/part-00000.parquet` (35 causas:
+`nombre_causa`, `grupo_diagnostico`, `tipo_prestacion`, `codigo_cie10`). Establecimientos: `establecimientos-salud`
+(compartido con el REM; región = dos primeros dígitos de `cut_com`).
+**Cobertura:** 2008 → hoy (diario; la fuente se revisa cada semana y reescribe años anteriores)
+**Escala:** ~425 M filas
+
+**Columnas (hechos):** `year`, `semana`, `fecha`, `id_establecimiento`, `id_causa`, `rango_etario` (5 valores fijos),
+`atenciones`, `tipo_campana`, `flags_procesamiento` (`33` = clave repetida en la fuente colapsada).
+
+Trampas:
+- No sumar todas las causas: `34` (*total demanda*) es el total de consultas; `07`/`22`/`23` (*total*) son totales de
+  hospitalización por grupo; `28` es parte de `27`. Sumar causas de un mismo `tipo_prestacion`.
+- `34`, COVID-19 (`30`-`33`), salud mental (`37`-`42`) y `35` existen desde 2020; `43` desde 2025.
+- `semana` va de domingo a sábado y los últimos días de diciembre pueden ser semana 1 con `year` del año anterior: para
+  series semanales usar el año del miércoles de la semana (`anio_epi` en el notebook).
 
 ### sociologia / ine
 

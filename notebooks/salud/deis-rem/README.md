@@ -23,7 +23,7 @@ s3://do-datopia/categoria=salud/pais=cl/fuente=deis/
 
 El diccionario es un dataset hermano de los hechos (otro `tipo=`), no un subdirectorio de ellos.
 
-**Formato largo.** Una fila por (`year`, `mes`, `id_establecimiento`, `cod_prestacion`,
+**Formato largo.** Una fila por (`year`, `month`, `id_establecimiento`, `cod_prestacion`,
 `cod_col_numerica`) con su `cantidad`. Unifica las 5 series de origen (`tipo_serie`: `a`, `bs`,
 `bm`, `d`, `p`), que DEIS publica como CSV anchos (una columna `ColNN` por corte).
 
