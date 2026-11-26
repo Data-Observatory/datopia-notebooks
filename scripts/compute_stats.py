@@ -26,7 +26,7 @@ import duckdb
 import requests
 
 ROOT = Path(__file__).resolve().parent.parent
-API_URL = "https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod"
+API_URL = "https://api.datopia.dataobservatory.net/api"
 
 # Cuántos períodos sin datos se listan explícitamente en el texto antes de resumirlos
 MAX_LISTED_GAPS = 3

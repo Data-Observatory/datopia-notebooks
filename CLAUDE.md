@@ -110,7 +110,7 @@ POST /auth/session/s3     → { access_key_id, secret_access_key, session_token,
 Credenciales STS temporales (1 h por defecto). Renovar 5 min antes de expirar
 (`hints.refresh_before_seconds = 300`).
 
-API Gateway URL: `https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod`
+URL de la API (base; los endpoints se agregan a esta URL): `https://api.datopia.dataobservatory.net/api`
 Región AWS: `us-west-2`
 Bucket S3: `do-datopia`
 

@@ -4,7 +4,7 @@ library(arrow)
 library(dplyr)
 library(httr2)
 
-url <- "https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod"
+url <- "https://api.datopia.dataobservatory.net/api"
 sesion <- request(paste0(url, "/auth/login")) |>
   req_body_json(list(email = "tu-email@ejemplo.com", password = "tu-contraseña")) |>
   req_perform() |> resp_body_json()

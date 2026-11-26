@@ -2,7 +2,7 @@
 
 import { DuckDBInstance } from "@duckdb/node-api";
 
-const url = "https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod";
+const url = "https://api.datopia.dataobservatory.net/api";
 const sesion = await (await fetch(`${url}/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ email: "tu-email@ejemplo.com", password: "tu-contraseña" }) })).json();
 const cred = await (await fetch(`${url}/auth/session/s3`, { method: "POST",

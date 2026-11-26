@@ -3,7 +3,7 @@
 using DuckDB, DBInterface, DataFrames
 using HTTP, JSON3
 
-url = "https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod"
+url = "https://api.datopia.dataobservatory.net/api"
 sesion = JSON3.read(HTTP.post("$url/auth/login", ["Content-Type" => "application/json"],
     JSON3.write(Dict("email" => "tu-email@ejemplo.com", "password" => "tu-contraseña"))).body)
 cred = JSON3.read(HTTP.post("$url/auth/session/s3", ["Authorization" => "Bearer $(sesion.id_token)"]).body)

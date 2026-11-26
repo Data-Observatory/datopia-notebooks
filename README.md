@@ -70,7 +70,7 @@ jupyter notebook
 Google Colab / Jupyter local
         │
         ▼
-  API Gateway (HTTPS)
+  API de Datopia (HTTPS)
   ├── POST /auth/login          → JWT access token
   └── POST /auth/session/s3    → credenciales STS temporales (1 h)
         │

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Requiere el CLI de DuckDB, curl y jq
 
-URL="https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod"
+URL="https://api.datopia.dataobservatory.net/api"
 TOKEN=$(curl -s -X POST "$URL/auth/login" -H "Content-Type: application/json" \
   -d '{"email": "tu-email@ejemplo.com", "password": "tu-contraseña"}' | jq -r .id_token)
 CRED=$(curl -s -X POST "$URL/auth/session/s3" -H "Authorization: Bearer $TOKEN")

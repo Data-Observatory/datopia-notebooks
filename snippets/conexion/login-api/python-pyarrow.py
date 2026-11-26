@@ -4,7 +4,7 @@ import pyarrow.dataset as ds
 from pyarrow import fs
 import requests
 
-url = "https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod"
+url = "https://api.datopia.dataobservatory.net/api"
 sesion = requests.post(f"{url}/auth/login", json={"email": "tu-email@ejemplo.com", "password": "tu-contraseña"}).json()
 cred = requests.post(f"{url}/auth/session/s3", headers={"Authorization": f"Bearer {sesion['id_token']}"}).json()
 key, secret, token = cred["access_key_id"], cred["secret_access_key"], cred["session_token"]

@@ -43,7 +43,7 @@ Datos seleccionados y procesados por DO para facilitar el acceso directo. El cat
 
 ```
 Cliente (DuckDB)
-    └── API Gateway  →  Lambda auth
+    └── API de Datopia  →  autenticación
             └── S3: do-datopia (us-west-2)
 ```
 

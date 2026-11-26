@@ -21,7 +21,7 @@ CONSULTAS = RAIZ / "consultas"
 RESULTADOS = RAIZ / "resultados"
 RESULTADOS.mkdir(exist_ok=True)
 
-API_URL = "https://ee98cnfz7e.execute-api.us-west-2.amazonaws.com/prod"
+API_URL = "https://api.datopia.dataobservatory.net/api"
 CUT_COMUNA = "13110"   # La Florida (debe coincidir con los literales de consultas/*.sql)
 
 # ── Conexión ────────────────────────────────────────────────────────────────
