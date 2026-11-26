@@ -407,6 +407,14 @@ ahí debe quedar solo lo que aún falta. Si el dataset ya trae la columna pero n
 relación y actualizar `columnas_desde_hoy` y la `nota`. El visor tiene simulación de fuerzas (arrastrar un nodo
 reacomoda el resto; botones Animación y Reorganizar) y vista Tabla como equivalente accesible.
 
+- Modo **Solo espacial** (botón; `#espacial=1`): atenúa los nodos sin geometría, fuerza las capas espaciales y
+  rotula el predicado en cada línea. La tarjeta de un nodo con geometría trae "Cruce espacial": con qué otros
+  datasets se cruza por ubicación (sin columna común), con un SQL de DuckDB por predicado. Los pares y predicados
+  se **derivan** de los tipos de geometría del catálogo (no son uniones declaradas).
+- `relaciones-objetivo.json` acepta `ejemplos` (`id`, `titulo`, `descripcion`, `notebook`, `datasets`): notebooks reales
+  que usan datasets del grafo (hoy `aire-salud`); `construir()` valida que cada id exista y la tarjeta muestra
+  "Ejemplo real".
+
 - Al 2026-11-26: 36 datasets y 87 aristas; geometría declarada en `division-territorial` v1, SINCA
   `estaciones`, DEIS `establecimientos-salud`, GTFS `stops` y `shapes-lineas`, y las posiciones.
   `division-territorial` v2 ya no existe como nodo (se fusionó en v1).

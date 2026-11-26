@@ -12,6 +12,10 @@ Reglas del grafo:
   - Espacial: tener geometría es una insignia del nodo. La capa espacial dibuja una arista por dataset
     hacia el polígono de referencia (comunas). Todos los pares espaciales posibles (teóricos) son una
     capa aparte, apagada por defecto.
+  - Ejemplos reales: `ejemplos` de `relaciones-objetivo.json` enlaza notebooks que ya usan datasets del grafo
+    (se valida que cada id exista en el catálogo); el visor los muestra en la tarjeta del nodo.
+  - Los pares y predicados espaciales se derivan de los tipos de geometría declarados en el catálogo; no son
+    uniones declaradas.
   - Cada arista lleva su estado: `hoy` (declarada en el modelo público) u `objetivo` (se asume cerrada),
     y una advertencia si tiene un problema conocido.
 
@@ -70,6 +74,21 @@ def construir(datamodel, objetivo):
     ds = {d["id"]: d for d in datamodel["datasets"]}
     grupos = {g["id"]: g for g in datamodel["dataset_groups"]}
     tabla_geo = objetivo["tabla_geografica"]
+
+    # --- ejemplos reales (notebooks que usan datasets del grafo): se validan contra el catálogo
+    ejemplos = []
+    for k, ej in enumerate(objetivo.get("ejemplos", [])):
+        nombre = ej.get("id") or f"#{k}"
+        for campo in ("id", "titulo", "notebook", "datasets"):
+            if not ej.get(campo):
+                raise ValueError(f"ejemplos[{nombre}]: falta el campo '{campo}' en relaciones-objetivo.json")
+        for i in ej["datasets"]:
+            if i not in ds:
+                raise ValueError(f"ejemplos[{nombre}]: el dataset '{i}' no está en el catálogo")
+        ejemplos.append({
+            "id": ej["id"], "titulo": ej["titulo"], "descripcion": ej.get("descripcion", ""),
+            "notebook": ej["notebook"], "datasets": list(ej["datasets"]),
+        })
 
     # --- nodos
     geom_hoy = {}
@@ -228,6 +247,7 @@ def construir(datamodel, objetivo):
         "comparten": comp_salida,
         "grupos": [{"id": g["id"], "titulo": g["title"]["es"]} for g in datamodel["dataset_groups"]],
         "supuestos": objetivo.get("supuestos", []),
+        "ejemplos": ejemplos,
         "tabla_geografica": tabla_geo,
     }
 

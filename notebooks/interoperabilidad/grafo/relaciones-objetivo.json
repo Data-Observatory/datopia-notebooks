@@ -8,6 +8,25 @@
   "renombres_codigos": {"cod_comuna": "cut_com", "cod_provincia": "cut_prov", "cod_region": "cut_reg"},
   "tabla_geografica": "geografia_social_cl_subdere_division_territorial_v1",
   "fusiones": [],
+  "ejemplos": [
+    {
+      "id": "aire-salud",
+      "titulo": "Aire y salud: MP2,5 y consultas respiratorias por comuna",
+      "descripcion": "Cruza las estaciones SINCA con las comunas por ubicación (ST_Contains sobre el polígono, ST_Point(lon, lat)); luego une salud, población y aire por código de comuna y por fecha.",
+      "notebook": "https://github.com/Data-Observatory/datopia-notebooks/blob/main/notebooks/interoperabilidad/aire-salud/demo.ipynb",
+      "datasets": [
+        "medio_fisico_cl_sinca_estaciones_v1",
+        "medio_fisico_cl_sinca_estaciones_variables_v1",
+        "medio_fisico_cl_sinca_medicion_diaria_v1",
+        "salud_cl_deis_resumen_estadistico_mensual_v1",
+        "salud_cl_deis_establecimientos_salud_v1",
+        "salud_cl_deis_codigos_rem_v1",
+        "sociologia_cl_ine_censos_poblacionales_v1w",
+        "sociologia_cl_ine_division_territorial_censal_v1",
+        "geografia_social_cl_subdere_division_territorial_v1"
+      ]
+    }
+  ],
   "geometrias": [
     {"dataset": "geografia_social_cl_subdere_division_territorial_v1", "geometry_type": "MultiPolygon", "issue": "#59"}
   ],
