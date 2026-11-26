@@ -384,6 +384,34 @@ Trampas:
   establecimientos por semi-join contra `establecimientos-salud.cod_comuna` (con cero: `09101`).
 - Comuna sin estación PM2,5: fallback a la más cercana (haversine al centroide del polígono).
 
+
+### interoperabilidad / grafo
+
+**No es un dataset propio**: visor HTML interactivo (`visor.html` plantilla + `grafo_datasets.py` módulo +
+`relaciones-objetivo.json` + `demo.ipynb`) de cómo se conectan los datasets. Lee el modelo público
+`https://datopia.dataobservatory.net/_meta/datamodel.json` (sin credenciales) y le suma las relaciones
+"objetivo" de `relaciones-objetivo.json`. `grafo-datopia.html` es el visor ya generado (autocontenido):
+**se regenera, nunca se edita a mano**:
+
+```bash
+cd notebooks/interoperabilidad/grafo
+python - <<'PY'
+import json, grafo_datasets as gd
+grafo = gd.construir(gd.cargar_datamodel(), json.load(open("relaciones-objetivo.json", encoding="utf-8")))
+gd.escribir_html(grafo, "visor.html", "grafo-datopia.html")
+PY
+```
+
+Cuando el modelo público ya declara algo (geometría, columna, relación), **quitarlo de `relaciones-objetivo.json`**:
+ahí debe quedar solo lo que aún falta. Si el dataset ya trae la columna pero no declara la relación, dejar la
+relación y actualizar `columnas_desde_hoy` y la `nota`. El visor tiene simulación de fuerzas (arrastrar un nodo
+reacomoda el resto; botones Animación y Reorganizar) y vista Tabla como equivalente accesible.
+
+- Al 2026-11-26: 36 datasets y 87 aristas; geometría declarada en `division-territorial` v1, SINCA
+  `estaciones`, DEIS `establecimientos-salud`, GTFS `stops` y `shapes-lineas`, y las posiciones.
+  `division-territorial` v2 ya no existe como nodo (se fusionó en v1).
+- Pendiente (#57): `sinca/estaciones` aún no publica `cut_com`/`cut_prov`/`cut_reg`.
+
 ---
 
 ## Convenciones de notebooks

@@ -3,25 +3,21 @@
   "supuestos": [
     "#56: códigos de comuna, provincia y región con los nombres oficiales cut_com, cut_prov y cut_reg en todos los datasets",
     "#57: sinca estaciones publica cut_com, cut_prov y cut_reg",
-    "#58: establecimientos de salud publica geometría Point (más lon y lat)",
-    "#59: division-territorial v2 se fusiona en v1; v1 queda con geometría"
+    "#59: division-territorial v1 queda con geometría (v2 se eliminó)"
   ],
   "renombres_codigos": {"cod_comuna": "cut_com", "cod_provincia": "cut_prov", "cod_region": "cut_reg"},
   "tabla_geografica": "geografia_social_cl_subdere_division_territorial_v1",
-  "fusiones": [
-    {"desde": "geografia_social_cl_subdere_division_territorial_v2", "hacia": "geografia_social_cl_subdere_division_territorial_v1", "issue": "#59"}
-  ],
+  "fusiones": [],
   "geometrias": [
-    {"dataset": "geografia_social_cl_subdere_division_territorial_v1", "geometry_type": "MultiPolygon", "issue": "#59"},
-    {"dataset": "salud_cl_deis_establecimientos_salud_v1", "geometry_type": "Point", "issue": "#58"}
+    {"dataset": "geografia_social_cl_subdere_division_territorial_v1", "geometry_type": "MultiPolygon", "issue": "#59"}
   ],
   "relaciones": [
     {
       "id": "obj.establecimientos.comuna",
       "desde": "salud_cl_deis_establecimientos_salud_v1", "hacia": "geografia_social_cl_subdere_division_territorial_v1",
-      "columnas_desde": ["cut_com"], "columnas_hacia": ["cut_com"], "columnas_desde_hoy": ["cod_comuna"],
+      "columnas_desde": ["cut_com"], "columnas_hacia": ["cut_com"], "columnas_desde_hoy": ["cut_com"],
       "issues": ["#56", "#59"], "vigencia": "establecimientos: fecha_apertura a fecha_cierre; comunas: snapshot_date",
-      "nota": "Hoy el dataset trae cod_comuna sin declarar la relación."
+      "nota": "Hoy el dataset ya trae cut_com (y geometría), pero no declara la relación."
     },
     {
       "id": "obj.sinca-estaciones.comuna",

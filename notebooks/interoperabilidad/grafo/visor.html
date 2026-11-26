@@ -30,7 +30,8 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:12px;padding:8px
 svg{display:block;width:100%;height:auto;touch-action:none;cursor:grab}
 svg.arrastrando{cursor:grabbing}
 .zoom{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px}
-.nodo{cursor:pointer}
+.nodo{cursor:grab}
+.nodo:active{cursor:grabbing}
 .nodo text{font-size:9.5px;fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:3px;pointer-events:none}
 .nodo:focus-visible circle.c,.nodo.sel circle.c{stroke:var(--foco);stroke-width:3}
 .nodo.apagado,.arista.apagada{opacity:.12}
@@ -66,7 +67,7 @@ body.tabla main{display:none}
 <body>
 <header>
   <h1>Grafo de conexiones entre datasets de Datopia</h1>
-  <p>Cada nodo es un dataset; una línea es una relación por columnas compartidas con una tabla. Dos datasets se relacionan si uno referencia al otro o si ambos referencian una misma tabla (la tabla compartida es un nodo). La insignia de un nodo indica que tiene geometría; la capa espacial las conecta con las comunas. Datos: <code>_meta/datamodel.json</code> más <code>relaciones-objetivo.json</code>.</p>
+  <p>Cada nodo es un dataset; una línea es una relación por columnas compartidas con una tabla. Dos datasets se relacionan si uno referencia al otro o si ambos referencian una misma tabla (la tabla compartida es un nodo). La insignia de un nodo indica que tiene geometría; la capa espacial las conecta con las comunas. Arrastra un nodo para moverlo: el resto se reacomoda solo. Datos: <code>_meta/datamodel.json</code> más <code>relaciones-objetivo.json</code>.</p>
 </header>
 
 <div class="barra" role="group" aria-label="Controles">
@@ -79,6 +80,8 @@ body.tabla main{display:none}
     <label><input type="checkbox" id="c-par"> Todos los pares espaciales (teórico)</label>
   </fieldset>
   <input type="search" id="buscar" placeholder="Buscar dataset" aria-label="Buscar dataset">
+  <button id="v-anim" aria-pressed="true" title="Pausar o reanudar la simulación de fuerzas">⏸ Animación</button>
+  <button id="v-reorg" title="Volver al acomodo inicial y dejar que se reacomode">Reorganizar</button>
   <button id="v-mapa" aria-pressed="true">Mapa</button>
   <button id="v-tabla" aria-pressed="false">Tabla</button>
 </div>
@@ -126,6 +129,7 @@ const el = (tag, attrs = {}, hijos = []) => {
 const nodo = Object.fromEntries(G.nodos.map(n => [n.id, n]));
 const colorGrupo = Object.fromEntries(G.grupos.map((g, i) => [g.id, COLORES[i % COLORES.length]]));
 
+const refs = { aristas: [], nodos: new Map() };
 const estado = { modo: "objetivo", esp: true, par: false, sel: null, grupos: new Set(G.grupos.map(g => g.id)), q: "", vista: "mapa" };
 
 function leerHash() {
@@ -172,22 +176,19 @@ function dibujar() {
   const aristas = G.aristas.filter(visible);
   const vecinos = new Set();
   if (estado.sel) for (const e of aristas) { if (e.desde === estado.sel) vecinos.add(e.hacia); if (e.hacia === estado.sel) vecinos.add(e.desde); }
-  const nodosEnJuego = new Set(); // nodos con insignia o aristas visibles
+  refs.aristas = []; refs.nodos = new Map();
   for (const e of aristas) {
     const a = nodo[e.desde], b = nodo[e.hacia];
-    const curva = e.tipo === "espacial" || e.tipo === "espacial-par";
-    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
-    const k = curva ? 0.16 : 0;
-    const cx = mx - dy / d * d * k, cy = my + dx / d * d * k;
-    const p = el("path", { d: `M${a.x},${a.y} Q${cx},${cy} ${b.x},${b.y}`, class: "arista " + claseArista(e) });
+    const p = el("path", { class: "arista " + claseArista(e) });
     if (e.tipo === "tabular" || e.tipo === "fusion" || e.tipo === "espacial") p.setAttribute("marker-end", "url(#flecha)");
     const rel = estado.sel && (e.desde === estado.sel || e.hacia === estado.sel);
     if (rel) p.classList.add("sel");
     if (apagadoNodo(a) || apagadoNodo(b) || (estado.sel && !rel)) p.classList.add("apagada");
     p.append(el("title", {}, [document.createTextNode(`${nodo[e.desde].etiqueta} → ${nodo[e.hacia].etiqueta}` + (e.predicado ? ` (${e.predicado})` : "") + (etiquetaCols(e) ? `: ${etiquetaCols(e)}` : "") + (e.advertencia ? ` ⚠ ${e.advertencia}` : ""))]));
     gA.append(p);
-    if (e.advertencia && !p.classList.contains("apagada")) gS.append(el("text", { x: cx / 2 + mx / 2, y: cy / 2 + my / 2 + 4, class: "sim", "text-anchor": "middle" }, [document.createTextNode("⚠")]));
+    let w = null;
+    if (e.advertencia && !p.classList.contains("apagada")) { w = el("text", { class: "sim", "text-anchor": "middle" }, [document.createTextNode("⚠")]); gS.append(w); }
+    refs.aristas.push({ e, p, w });
   }
   for (const n of G.nodos) {
     const apag = apagadoNodo(n) || (estado.sel && n.id !== estado.sel && !vecinos.has(n.id));
@@ -209,11 +210,29 @@ function dibujar() {
     }
     if (n.autoref) g.append(el("text", { x: -r - 1, y: -r + 2, "font-size": 10, fill: "var(--mut)", "text-anchor": "end", style: "paint-order:stroke;stroke:var(--panel);stroke-width:3px" }, [document.createTextNode("↻")]));
     g.append(el("text", { y: r + 11, "text-anchor": "middle" }, [document.createTextNode(n.corta)]));
-    g.addEventListener("click", ev => { ev.stopPropagation(); elegir(n.id); });
+    g.addEventListener("click", ev => { ev.stopPropagation(); if (!sim.recienArrastrado) elegir(n.id); });
     g.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); elegir(n.id); } });
+    g.addEventListener("pointerdown", ev => iniciarArrastre(ev, n));
+    refs.nodos.set(n.id, g);
     gN.append(g);
   }
+  pintar();
   dibujarTabla(aristas);
+}
+
+// posiciones en pantalla: se llama en cada cuadro de la simulación sin reconstruir el DOM
+function pintar() {
+  for (const { e, p, w } of refs.aristas) {
+    const a = nodo[e.desde], b = nodo[e.hacia];
+    const curva = e.tipo === "espacial" || e.tipo === "espacial-par";
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1;
+    const k = curva ? 0.16 : 0;
+    const cx = mx - dy / d * d * k, cy = my + dx / d * d * k;
+    p.setAttribute("d", `M${a.x},${a.y} Q${cx},${cy} ${b.x},${b.y}`);
+    if (w) { w.setAttribute("x", cx / 2 + mx / 2); w.setAttribute("y", cy / 2 + my / 2 + 4); }
+  }
+  for (const [id, g] of refs.nodos) g.setAttribute("transform", `translate(${nodo[id].x},${nodo[id].y})`);
 }
 
 function elegir(id) { estado.sel = estado.sel === id ? null : id; escribirHash(); dibujar(); tarjeta(); }
@@ -310,7 +329,76 @@ $("#buscar").addEventListener("input", e => { estado.q = e.target.value; dibujar
 $("#v-mapa").onclick = () => { estado.vista = "mapa"; sincronizarControles(); escribirHash(); };
 $("#v-tabla").onclick = () => { estado.vista = "tabla"; sincronizarControles(); escribirHash(); };
 
-leerHash(); cadenaChips(); sincronizarControles(); dibujar(); tarjeta();
+// simulación de fuerzas: los nodos se repelen, las relaciones tabulares son resortes y cada grupo atrae a los suyos.
+// Parte de las posiciones calculadas por grafo_datasets.py; al arrastrar un nodo el resto se reacomoda.
+const sim = { alpha: 0, activa: !matchMedia("(prefers-reduced-motion: reduce)").matches, raf: 0, arrastre: null, recienArrastrado: false };
+const ANCHO = 1200, ALTO = 800, LARGO_RESORTE = 110, FUERZA = 0.7, FRICCION = 0.85;
+const gruposIds = G.grupos.map(g => g.id);
+const centroGrupo = Object.fromEntries(gruposIds.map((id, k) => {
+  const ang = 2 * Math.PI * k / gruposIds.length - Math.PI / 2;
+  return [id, [ANCHO / 2 + 0.34 * ANCHO * Math.cos(ang), ALTO / 2 + 0.34 * ALTO * Math.sin(ang)]];
+}));
+const resortes = G.aristas.filter(e => e.tipo === "tabular" || e.tipo === "fusion");
+for (const n of G.nodos) { n.x0 = n.x; n.y0 = n.y; n.vx = 0; n.vy = 0; }
+
+function paso() {
+  const N = G.nodos, a = sim.alpha;
+  for (let i = 0; i < N.length; i++) for (let j = i + 1; j < N.length; j++) {
+    const A = N[i], B = N[j];
+    let dx = A.x - B.x, dy = A.y - B.y, d2 = dx * dx + dy * dy;
+    if (d2 < 1) { dx = Math.random() - .5; dy = Math.random() - .5; d2 = 1; }
+    const d = Math.sqrt(d2), f = Math.min(6000 / d2, 8) / d;
+    A.vx += dx * f * a * FUERZA; A.vy += dy * f * a * FUERZA; B.vx -= dx * f * a * FUERZA; B.vy -= dy * f * a * FUERZA;
+  }
+  for (const e of resortes) {
+    const A = nodo[e.desde], B = nodo[e.hacia];
+    const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy) || 1, f = (d - LARGO_RESORTE) / d * 0.06 * a * FUERZA;
+    A.vx += dx * f; A.vy += dy * f; B.vx -= dx * f; B.vy -= dy * f;
+  }
+  for (const n of N) {
+    const c = centroGrupo[n.grupo] || [ANCHO / 2, ALTO / 2];
+    n.vx += ((c[0] - n.x) * 0.03 + (ANCHO / 2 - n.x) * 0.004) * a * FUERZA / 2;
+    n.vy += ((c[1] - n.y) * 0.03 + (ALTO / 2 - n.y) * 0.004) * a * FUERZA / 2;
+    if (n.fijo) { n.vx = n.vy = 0; continue; }
+    n.vx *= FRICCION; n.vy *= FRICCION;
+    n.x = Math.min(ANCHO - 40, Math.max(40, n.x + n.vx)); n.y = Math.min(ALTO - 30, Math.max(25, n.y + n.vy));
+  }
+}
+function bucle() {
+  sim.raf = 0;
+  if (!sim.activa || sim.alpha < 0.003) return;
+  paso(); pintar();
+  sim.alpha *= sim.arrastre ? 1 : 0.996;
+  sim.raf = requestAnimationFrame(bucle);
+}
+function calentar(a) { if (!sim.activa) return; sim.alpha = Math.max(sim.alpha, a); if (!sim.raf) sim.raf = requestAnimationFrame(bucle); }
+
+const aMundo = ev => { const r = svg.getBoundingClientRect(), esc = ANCHO / r.width; return [((ev.clientX - r.left) * esc - tf.x) / tf.k, ((ev.clientY - r.top) * esc - tf.y) / tf.k]; };
+function iniciarArrastre(ev, n) {
+  if (ev.button !== undefined && ev.button !== 0) return;
+  ev.stopPropagation();
+  const [mx, my] = aMundo(ev);
+  sim.arrastre = { n, dx: n.x - mx, dy: n.y - my, x: ev.clientX, y: ev.clientY, movido: false };
+  const mover = e => {
+    const s = sim.arrastre; if (!s) return;
+    if (!s.movido && Math.hypot(e.clientX - s.x, e.clientY - s.y) < 4) return; // umbral: un clic no es un arrastre
+    if (!s.movido) { s.movido = true; n.fijo = true; calentar(0.5); }
+    const [px, py] = aMundo(e);
+    n.x = Math.min(ANCHO - 20, Math.max(20, px + s.dx)); n.y = Math.min(ALTO - 15, Math.max(15, py + s.dy));
+    if (sim.activa) calentar(0.4); else pintar();
+  };
+  const soltar = () => {
+    window.removeEventListener("pointermove", mover); window.removeEventListener("pointerup", soltar); window.removeEventListener("pointercancel", soltar);
+    const s = sim.arrastre; sim.arrastre = null; n.fijo = false;
+    if (s && s.movido) { sim.recienArrastrado = true; setTimeout(() => { sim.recienArrastrado = false; }, 0); calentar(0.3); }
+  };
+  window.addEventListener("pointermove", mover); window.addEventListener("pointerup", soltar); window.addEventListener("pointercancel", soltar);
+}
+function sincronizarAnimacion() { $("#v-anim").setAttribute("aria-pressed", sim.activa); $("#v-anim").textContent = sim.activa ? "⏸ Animación" : "▶ Animación"; }
+$("#v-anim").onclick = () => { sim.activa = !sim.activa; if (!sim.activa && sim.raf) { cancelAnimationFrame(sim.raf); sim.raf = 0; } sincronizarAnimacion(); calentar(0.3); };
+$("#v-reorg").onclick = () => { for (const n of G.nodos) { n.x = n.x0; n.y = n.y0; n.vx = n.vy = 0; } pintar(); calentar(0.6); };
+
+leerHash(); cadenaChips(); sincronizarControles(); sincronizarAnimacion(); dibujar(); tarjeta(); calentar(0.7);
 </script>
 </body>
 </html>
